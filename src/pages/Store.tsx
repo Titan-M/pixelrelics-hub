@@ -49,7 +49,7 @@ export default function Store() {
         
         // Extract all unique genres
         const uniqueGenres = Array.from(new Set(data.map((game: any) => game.genre)));
-        setGenres(uniqueGenres as string[]);
+        setGenres(uniqueGenres.filter(Boolean) as string[]); // Filter out null values
       } catch (error) {
         console.error('Error fetching games:', error);
       } finally {
@@ -104,14 +104,14 @@ export default function Store() {
                 <div>
                   <label className="block mb-2 text-sm">Genre</label>
                   <Select
-                    value={selectedGenre || ""}
-                    onValueChange={(value) => setSelectedGenre(value || null)}
+                    value={selectedGenre || "all"}
+                    onValueChange={(value) => setSelectedGenre(value === "all" ? null : value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="All Genres" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Genres</SelectItem>
+                      <SelectItem value="all">All Genres</SelectItem>
                       {genres.map((genre) => (
                         <SelectItem key={genre} value={genre}>
                           {genre}
