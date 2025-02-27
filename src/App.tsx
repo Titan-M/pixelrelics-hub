@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 
@@ -15,33 +14,53 @@ import Checkout from '@/pages/Checkout';
 import Profile from '@/pages/Profile';
 import NotFound from '@/pages/NotFound';
 
-// Providers
+// Components and Providers
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 import { Toaster } from '@/components/ui/toaster';
 
 function App() {
   return (
-    <AuthProvider>
-      <CartProvider>
-        <Router>
+    <Router>
+      <AuthProvider>
+        <CartProvider>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/store" element={<Store />} />
-            <Route path="/library" element={<Library />} />
             <Route path="/news" element={<News />} />
             <Route path="/support" element={<Support />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/profile" element={<Profile />} />
+            
+            {/* Protected Routes */}
+            <Route path="/library" element={
+              <ProtectedRoute>
+                <Library />
+              </ProtectedRoute>
+            } />
+            <Route path="/cart" element={
+              <ProtectedRoute>
+                <Cart />
+              </ProtectedRoute>
+            } />
+            <Route path="/checkout" element={
+              <ProtectedRoute>
+                <Checkout />
+              </ProtectedRoute>
+            } />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
+            
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Toaster />
-        </Router>
-      </CartProvider>
-    </AuthProvider>
+        </CartProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 

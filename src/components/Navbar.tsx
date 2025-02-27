@@ -1,14 +1,26 @@
-
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
 import { Menu, X, ShoppingCart, Heart, User } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useCart } from "@/context/CartContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { session, user, signOut } = useAuth();
+  const { cartCount } = useCart();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,8 +35,12 @@ export function Navbar() {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
 
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
+
   const menuItems = [
-    { name: "Home", path: "/" },
     { name: "Store", path: "/store" },
     { name: "Library", path: "/library" },
     { name: "News", path: "/news" },
@@ -68,21 +84,56 @@ export function Navbar() {
           </div>
           <div className="hidden md:flex items-center space-x-4">
             <ThemeToggle />
-            <Button variant="ghost" size="icon" className="relative hover:bg-primary/10">
-              <ShoppingCart className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-white">
-                0
-              </span>
-            </Button>
-            <Button variant="ghost" size="icon" className="hover:bg-primary/10">
-              <Heart className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="hover:bg-primary/10">
-              <User className="h-5 w-5" />
-            </Button>
-            <Button variant="default" asChild className="bg-primary hover:bg-primary/90">
-              <Link to="/login">Sign In</Link>
-            </Button>
+            
+            {session ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative hover:bg-primary/10"
+                  onClick={() => navigate('/cart')}
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-white">
+                      {cartCount}
+                    </span>
+                  )}
+                </Button>
+
+                <Button variant="ghost" size="icon" className="hover:bg-primary/10">
+                  <Heart className="h-5 w-5" />
+                </Button>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="rounded-full" size="icon">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="bg-primary/10 text-primary">
+                          {user?.email?.charAt(0).toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => navigate('/profile')}>
+                      Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/library')}>
+                      Library
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <Button variant="default" onClick={() => navigate('/login')}>
+                Sign In
+              </Button>
+            )}
           </div>
           <div className="md:hidden flex items-center">
             <ThemeToggle />
@@ -106,7 +157,7 @@ export function Navbar() {
             : "max-h-0 opacity-0 py-0 overflow-hidden"
         }`}
       >
-        <div className="px-6 space-y-4 pb-5">
+        <div className="px-4 space-y-4">
           {menuItems.map((item) => (
             <Link
               key={item.name}
@@ -120,25 +171,34 @@ export function Navbar() {
               {item.name}
             </Link>
           ))}
-          <div className="pt-2 flex justify-between items-center">
-            <Button asChild variant="default" className="w-full bg-primary hover:bg-primary/90">
-              <Link to="/login">Sign In</Link>
+          
+          {session ? (
+            <div className="pt-2 space-y-2">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start"
+                onClick={() => navigate('/profile')}
+              >
+                <User className="mr-2 h-4 w-4" />
+                Profile
+              </Button>
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start"
+                onClick={handleSignOut}
+              >
+                Sign Out
+              </Button>
+            </div>
+          ) : (
+            <Button 
+              variant="default" 
+              className="w-full mt-2"
+              onClick={() => navigate('/login')}
+            >
+              Sign In
             </Button>
-          </div>
-          <div className="flex justify-around pt-3">
-            <Button variant="ghost" size="icon" className="relative hover:bg-primary/10">
-              <ShoppingCart className="h-5 w-5" />
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-white">
-                0
-              </span>
-            </Button>
-            <Button variant="ghost" size="icon" className="hover:bg-primary/10">
-              <Heart className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="hover:bg-primary/10">
-              <User className="h-5 w-5" />
-            </Button>
-          </div>
+          )}
         </div>
       </div>
     </div>

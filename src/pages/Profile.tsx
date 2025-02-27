@@ -1,12 +1,20 @@
-
-import { useState } from "react";
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { GameCard } from "@/components/GameCard";
 import { User, Heart, Package, Clock, ShoppingCart, Settings, Edit } from "lucide-react";
+
+interface Profile {
+  username: string;
+  avatar_url?: string;
+  created_at: string;
+}
 
 // Mock data for user profile
 const userData = {
@@ -53,7 +61,42 @@ const wishlistGames = [
 ];
 
 export default function Profile() {
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("library");
+
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        if (!user?.id) return;
+
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (error) throw error;
+        setProfile(data);
+      } catch (error: any) {
+        toast({
+          title: 'Error fetching profile',
+          description: error.message,
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProfile();
+  }, [user]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
