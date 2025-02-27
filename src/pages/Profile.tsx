@@ -222,9 +222,4 @@ export default function Profile() {
             </div>
           </div>
         </div>
-      </main>
       
-      <Footer />
-    </div>
-  );
-}
