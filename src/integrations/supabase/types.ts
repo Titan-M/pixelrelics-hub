@@ -9,7 +9,213 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      cart: {
+        Row: {
+          added_at: string
+          game_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          game_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          game_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      faq: {
+        Row: {
+          answer: string
+          category: string | null
+          created_at: string
+          id: string
+          order_number: number | null
+          question: string
+        }
+        Insert: {
+          answer: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          order_number?: number | null
+          question: string
+        }
+        Update: {
+          answer?: string
+          category?: string | null
+          created_at?: string
+          id?: string
+          order_number?: number | null
+          question?: string
+        }
+        Relationships: []
+      }
+      games: {
+        Row: {
+          created_at: string
+          description: string | null
+          genre: string | null
+          id: string
+          image_url: string | null
+          is_free: boolean | null
+          price: number | null
+          rating: number | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          genre?: string | null
+          id?: string
+          image_url?: string | null
+          is_free?: boolean | null
+          price?: number | null
+          rating?: number | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          genre?: string | null
+          id?: string
+          image_url?: string | null
+          is_free?: boolean | null
+          price?: number | null
+          rating?: number | null
+          title?: string
+        }
+        Relationships: []
+      }
+      news: {
+        Row: {
+          category: string | null
+          content: string
+          id: string
+          image_url: string | null
+          is_featured: boolean | null
+          published_at: string
+          title: string
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          id?: string
+          image_url?: string | null
+          is_featured?: boolean | null
+          published_at?: string
+          title: string
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          id?: string
+          image_url?: string | null
+          is_featured?: boolean | null
+          published_at?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          id: string
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          id: string
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
+      user_library: {
+        Row: {
+          game_id: string
+          id: string
+          is_installed: boolean | null
+          last_played: string | null
+          purchase_date: string
+          user_id: string
+        }
+        Insert: {
+          game_id: string
+          id?: string
+          is_installed?: boolean | null
+          last_played?: string | null
+          purchase_date?: string
+          user_id: string
+        }
+        Update: {
+          game_id?: string
+          id?: string
+          is_installed?: boolean | null
+          last_played?: string | null
+          purchase_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_library_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wishlist: {
+        Row: {
+          added_at: string
+          game_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          game_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          game_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wishlist_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
