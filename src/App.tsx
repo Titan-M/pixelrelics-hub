@@ -13,6 +13,7 @@ import Support from '@/pages/Support';
 import Cart from '@/pages/Cart';
 import Checkout from '@/pages/Checkout';
 import Profile from '@/pages/Profile';
+import GameDetails from '@/pages/GameDetails';
 import NotFound from '@/pages/NotFound';
 
 // Components and Providers
@@ -31,6 +32,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/store" element={<Store />} />
+            <Route path="/game/:id" element={<GameDetails />} />
             <Route path="/news" element={<News />} />
             <Route path="/support" element={<Support />} />
             

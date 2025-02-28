@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Input } from '@/components/ui/input';
@@ -20,7 +21,7 @@ import {
 } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
-import { Search, StarIcon, ShoppingCart, Check } from 'lucide-react';
+import { Search, StarIcon, ShoppingCart, Check, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Game, useCart } from '@/context/CartContext';
 import { Separator } from '@/components/ui/separator';
@@ -37,6 +38,7 @@ export default function Store() {
   useEffect(() => {
     const fetchGames = async () => {
       try {
+        // Query to get all games
         const { data, error } = await supabase
           .from('games')
           .select('*');
@@ -64,8 +66,7 @@ export default function Store() {
     const matchesSearch = game.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesGenre = !selectedGenre || game.genre === selectedGenre;
     const matchesPrice = 
-      (game.is_free || game.price >= priceRange[0]) && 
-      (game.is_free || game.price <= priceRange[1]);
+      (game.is_free || (game.price >= priceRange[0] && game.price <= priceRange[1]));
     
     return matchesSearch && matchesGenre && matchesPrice;
   });
@@ -79,7 +80,7 @@ export default function Store() {
       <Navbar />
       
       <main className="flex-1 container mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold mb-8">Store</h1>
+        <h1 className="text-3xl font-bold mb-8">Browse Games</h1>
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {/* Search and filters */}
@@ -171,9 +172,24 @@ export default function Store() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredGames.map((game) => (
                   <Card key={game.id} className="overflow-hidden flex flex-col">
-                    <div className="h-40 bg-cover bg-center" style={{ backgroundImage: `url(${game.image_url})` }}></div>
+                    <Link to={`/game/${game.id}`} className="h-40 bg-cover bg-center relative group">
+                      <div 
+                        className="absolute inset-0 bg-cover bg-center" 
+                        style={{ backgroundImage: `url(${game.image_url})` }}
+                      ></div>
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
+                        <Button variant="secondary" size="sm" className="gap-1">
+                          <Info className="h-4 w-4" />
+                          View Details
+                        </Button>
+                      </div>
+                    </Link>
                     <CardHeader className="pb-2">
-                      <CardTitle className="line-clamp-1">{game.title}</CardTitle>
+                      <Link to={`/game/${game.id}`}>
+                        <CardTitle className="line-clamp-1 hover:text-primary transition-colors">
+                          {game.title}
+                        </CardTitle>
+                      </Link>
                       <div className="flex items-center text-sm text-yellow-500">
                         {[...Array(5)].map((_, i) => (
                           <StarIcon
