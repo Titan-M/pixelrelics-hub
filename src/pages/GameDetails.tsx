@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
@@ -13,43 +12,7 @@ import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { Heart, ShoppingCart, Clock, Tag, Award, Server, ArrowLeft, Check, Layers, Monitor, Cpu, HardDrive, Play } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
-interface GameDetail {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  is_free: boolean;
-  image_url: string;
-  genre: string;
-  rating: number;
-  developer?: string;
-  publisher?: string;
-  release_date?: string;
-  platform?: string[];
-  tags?: string[];
-  system_requirements?: {
-    minimum?: {
-      os?: string;
-      processor?: string;
-      memory?: string;
-      graphics?: string;
-      storage?: string;
-    };
-    recommended?: {
-      os?: string;
-      processor?: string;
-      memory?: string;
-      graphics?: string;
-      storage?: string;
-    };
-  };
-  media_gallery?: {
-    screenshots?: string[];
-    videos?: string[];
-  };
-  features?: string[];
-}
+import { GameDetail, parseJsonToSystemRequirements, parseJsonToMediaGallery } from '@/types/supabase-extensions';
 
 export default function GameDetails() {
   const { id } = useParams<{ id: string }>();
@@ -78,54 +41,87 @@ export default function GameDetails() {
           
         if (gameError) throw gameError;
         
-        // Fetch detailed game info - using a workaround to avoid type errors
-        // We know the table exists but it's not in the TypeScript definitions yet
-        const detailsResponse = await supabase
-          .from('game_details')
-          .select('*')
-          .eq('id', id)
-          .maybeSingle();
+        // Fetch detailed game info
+        const { data: detailsData, error: detailsError } = await supabase
+          .rpc('get_game_details', { game_id: id });
           
-        const detailsData = detailsResponse.data;
-        const detailsError = detailsResponse.error;
+        if (detailsError) {
+          console.warn('Could not fetch game details using RPC, falling back to direct query:', detailsError);
           
-        // Combine the data
-        const combinedData = {
-          ...gameData,
-          ...(detailsData || {})
-        };
-        
-        setGame(combinedData);
+          // Fallback: direct query to game_details table
+          const detailsResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/game_details?id=eq.${id}&select=*`, {
+            headers: {
+              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          const detailsResult = await detailsResponse.json();
+          const gameDetails = detailsResult[0] || {};
+          
+          // Combine the data
+          const gameDetail: GameDetail = {
+            ...gameData,
+            ...gameDetails,
+            system_requirements: parseJsonToSystemRequirements(gameDetails?.system_requirements),
+            media_gallery: parseJsonToMediaGallery(gameDetails?.media_gallery)
+          };
+          
+          setGame(gameDetail);
+        } else {
+          // Process with RPC result
+          const combinedData: GameDetail = {
+            ...gameData,
+            ...(detailsData || {}),
+            system_requirements: parseJsonToSystemRequirements(detailsData?.system_requirements),
+            media_gallery: parseJsonToMediaGallery(detailsData?.media_gallery)
+          };
+          
+          setGame(combinedData);
+        }
         
         // Track this view in user activity if logged in
         if (user) {
-          // Using a workaround for the user_activity table that's not in TypeScript definitions
-          await supabase.rpc('insert_user_activity', { 
-            p_user_id: user.id,
-            p_game_id: id,
-            p_activity_type: 'view',
-            p_details: { source: 'game_details_page' }
-          });
+          try {
+            // Use REST API endpoint instead of supabase client
+            await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/user_activity`, {
+              method: 'POST',
+              headers: {
+                'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${await supabase.auth.getSession().then(res => res.data.session?.access_token)}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+              },
+              body: JSON.stringify({
+                user_id: user.id,
+                game_id: id,
+                activity_type: 'view',
+                details: { source: 'game_details_page' }
+              })
+            });
+              
+            // Check if game is in user's wishlist
+            const { data: wishlistData } = await supabase
+              .from('wishlist')
+              .select('id')
+              .eq('user_id', user.id)
+              .eq('game_id', id)
+              .maybeSingle();
+              
+            setIsInWishlist(!!wishlistData);
             
-          // Check if game is in user's wishlist
-          const { data: wishlistData } = await supabase
-            .from('wishlist')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('game_id', id)
-            .maybeSingle();
-            
-          setIsInWishlist(!!wishlistData);
-          
-          // Check if game is in user's library
-          const { data: libraryData } = await supabase
-            .from('user_library')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('game_id', id)
-            .maybeSingle();
-            
-          setIsInLibrary(!!libraryData);
+            // Check if game is in user's library
+            const { data: libraryData } = await supabase
+              .from('user_library')
+              .select('id')
+              .eq('user_id', user.id)
+              .eq('game_id', id)
+              .maybeSingle();
+              
+            setIsInLibrary(!!libraryData);
+          } catch (error) {
+            console.error('Error with user-specific operations:', error);
+          }
         }
       } catch (error: any) {
         console.error('Error fetching game details:', error);

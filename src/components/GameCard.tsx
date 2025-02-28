@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Heart, ShoppingCart, Download } from "lucide-react";
@@ -280,6 +280,3 @@ export function GameCard({ id, title, image, price, genre, rating, description, 
     </Link>
   );
 }
-
-// Add missing import
-import { useEffect } from "react";
