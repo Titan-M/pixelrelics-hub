@@ -1,1 +1,6 @@
+
 project_id = "xzrplktgloumrqygnhze"
+[api]
+enabled = true
+[functions.insert_user_activity]
+verify_jwt = true

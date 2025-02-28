@@ -65,6 +65,50 @@ export type Database = {
         }
         Relationships: []
       }
+      game_details: {
+        Row: {
+          developer: string | null
+          features: string[] | null
+          id: string
+          media_gallery: Json | null
+          platform: string[] | null
+          publisher: string | null
+          release_date: string | null
+          system_requirements: Json | null
+          tags: string[] | null
+        }
+        Insert: {
+          developer?: string | null
+          features?: string[] | null
+          id: string
+          media_gallery?: Json | null
+          platform?: string[] | null
+          publisher?: string | null
+          release_date?: string | null
+          system_requirements?: Json | null
+          tags?: string[] | null
+        }
+        Update: {
+          developer?: string | null
+          features?: string[] | null
+          id?: string
+          media_gallery?: Json | null
+          platform?: string[] | null
+          publisher?: string | null
+          release_date?: string | null
+          system_requirements?: Json | null
+          tags?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_details_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       games: {
         Row: {
           created_at: string
@@ -134,23 +178,76 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
           created_at: string
           id: string
+          location: string | null
+          member_since: string | null
+          preferences: Json | null
+          social_links: Json | null
           username: string | null
+          website: string | null
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           id: string
+          location?: string | null
+          member_since?: string | null
+          preferences?: Json | null
+          social_links?: Json | null
           username?: string | null
+          website?: string | null
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           id?: string
+          location?: string | null
+          member_since?: string | null
+          preferences?: Json | null
+          social_links?: Json | null
           username?: string | null
+          website?: string | null
         }
         Relationships: []
+      }
+      user_activity: {
+        Row: {
+          activity_type: string
+          created_at: string | null
+          details: Json | null
+          game_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string | null
+          details?: Json | null
+          game_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string | null
+          details?: Json | null
+          game_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_activity_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_library: {
         Row: {

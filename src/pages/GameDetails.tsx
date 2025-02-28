@@ -78,12 +78,16 @@ export default function GameDetails() {
           
         if (gameError) throw gameError;
         
-        // Fetch detailed game info
-        const { data: detailsData, error: detailsError } = await supabase
+        // Fetch detailed game info - using a workaround to avoid type errors
+        // We know the table exists but it's not in the TypeScript definitions yet
+        const detailsResponse = await supabase
           .from('game_details')
           .select('*')
           .eq('id', id)
           .maybeSingle();
+          
+        const detailsData = detailsResponse.data;
+        const detailsError = detailsResponse.error;
           
         // Combine the data
         const combinedData = {
@@ -95,15 +99,13 @@ export default function GameDetails() {
         
         // Track this view in user activity if logged in
         if (user) {
-          await supabase
-            .from('user_activity')
-            .insert({
-              user_id: user.id,
-              game_id: id,
-              activity_type: 'view',
-              details: { source: 'game_details_page' }
-            })
-            .select();
+          // Using a workaround for the user_activity table that's not in TypeScript definitions
+          await supabase.rpc('insert_user_activity', { 
+            p_user_id: user.id,
+            p_game_id: id,
+            p_activity_type: 'view',
+            p_details: { source: 'game_details_page' }
+          });
             
           // Check if game is in user's wishlist
           const { data: wishlistData } = await supabase

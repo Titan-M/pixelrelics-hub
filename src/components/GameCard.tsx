@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Heart, ShoppingCart, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from '@/integrations/supabase/client';
 
 interface GameCardProps {
   id: string;
@@ -20,25 +22,161 @@ export function GameCard({ id, title, image, price, genre, rating, description, 
   const [isHovered, setIsHovered] = useState(false);
   const { toast } = useToast();
   const [isLiked, setIsLiked] = useState(false);
+  const { user } = useAuth();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isAddingToWishlist, setIsAddingToWishlist] = useState(false);
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    toast({
-      title: `${title} added to cart`,
-      description: "Item has been added to your shopping cart",
-    });
+    
+    if (!user) {
+      toast({
+        title: 'Authentication required',
+        description: 'Please sign in to add games to your cart',
+      });
+      return;
+    }
+    
+    try {
+      setIsAddingToCart(true);
+      
+      // Check if game is already in cart
+      const { data: existingCartItem } = await supabase
+        .from('cart')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('game_id', id)
+        .single();
+        
+      if (existingCartItem) {
+        toast({
+          title: 'Game already in cart',
+          description: `${title} is already in your cart`,
+        });
+        return;
+      }
+      
+      // Add to cart
+      const { error } = await supabase
+        .from('cart')
+        .insert({
+          user_id: user.id,
+          game_id: id
+        });
+        
+      if (error) throw error;
+      
+      toast({
+        title: `${title} added to cart`,
+        description: "Item has been added to your shopping cart",
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
-  const handleAddToWishlist = (e: React.MouseEvent) => {
+  const handleAddToWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsLiked(!isLiked);
-    toast({
-      title: isLiked ? `${title} removed from wishlist` : `${title} added to wishlist`,
-      description: isLiked ? "Item has been removed from your wishlist" : "Item has been added to your wishlist",
-    });
+    
+    if (!user) {
+      toast({
+        title: 'Authentication required',
+        description: 'Please sign in to add games to your wishlist',
+      });
+      return;
+    }
+    
+    try {
+      setIsAddingToWishlist(true);
+      
+      if (isLiked) {
+        // Remove from wishlist
+        const { error } = await supabase
+          .from('wishlist')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('game_id', id);
+          
+        if (error) throw error;
+        
+        setIsLiked(false);
+        toast({
+          title: `${title} removed from wishlist`,
+          description: "Item has been removed from your wishlist",
+        });
+      } else {
+        // Check if already in wishlist
+        const { data: existingWishlistItem } = await supabase
+          .from('wishlist')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('game_id', id)
+          .maybeSingle();
+          
+        if (existingWishlistItem) {
+          setIsLiked(true);
+          toast({
+            title: 'Game already in wishlist',
+            description: `${title} is already in your wishlist`,
+          });
+          return;
+        }
+        
+        // Add to wishlist
+        const { error } = await supabase
+          .from('wishlist')
+          .insert({
+            user_id: user.id,
+            game_id: id
+          });
+          
+        if (error) throw error;
+        
+        setIsLiked(true);
+        toast({
+          title: `${title} added to wishlist`,
+          description: "Item has been added to your wishlist",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsAddingToWishlist(false);
+    }
   };
+
+  useEffect(() => {
+    async function checkWishlist() {
+      if (!user) return;
+      
+      try {
+        const { data } = await supabase
+          .from('wishlist')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('game_id', id)
+          .maybeSingle();
+          
+        setIsLiked(!!data);
+      } catch (error) {
+        console.error('Error checking wishlist:', error);
+      }
+    }
+    
+    checkWishlist();
+  }, [id, user]);
 
   const formatPrice = (price: number | 'Free') => {
     if (price === 'Free') return 'Free';
@@ -102,6 +240,7 @@ export function GameCard({ id, title, image, price, genre, rating, description, 
                 size="icon" 
                 className="h-9 w-9 rounded-full bg-white/10 backdrop-blur-md hover:bg-primary/20 transition-all duration-300"
                 onClick={handleAddToWishlist}
+                disabled={isAddingToWishlist}
               >
                 <Heart className={`h-4 w-4 ${isLiked ? 'text-red-500 fill-red-500' : 'text-white'}`} />
               </Button>
@@ -121,6 +260,7 @@ export function GameCard({ id, title, image, price, genre, rating, description, 
                   size="icon" 
                   className="h-9 w-9 rounded-full bg-white/10 backdrop-blur-md hover:bg-primary/20 transition-all duration-300"
                   onClick={handleAddToCart}
+                  disabled={isAddingToCart}
                 >
                   <ShoppingCart className="h-4 w-4 text-white" />
                 </Button>
@@ -140,3 +280,6 @@ export function GameCard({ id, title, image, price, genre, rating, description, 
     </Link>
   );
 }
+
+// Add missing import
+import { useEffect } from "react";
