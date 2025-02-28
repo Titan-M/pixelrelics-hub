@@ -21,10 +21,12 @@ import {
 } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
-import { Search, StarIcon, ShoppingCart, Check, Info } from 'lucide-react';
+import { Search, StarIcon, ShoppingCart, Check, Info, Heart } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Game, useCart } from '@/context/CartContext';
 import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Store() {
   const [games, setGames] = useState<Game[]>([]);
@@ -33,7 +35,10 @@ export default function Store() {
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [priceRange, setPriceRange] = useState([0, 70]); // Assuming max price is 70
   const [genres, setGenres] = useState<string[]>([]);
+  const [wishlistItems, setWishlistItems] = useState<string[]>([]);
   const { addToCart, isInCart } = useCart();
+  const { user } = useAuth();
+  const { toast } = useToast();
   
   useEffect(() => {
     const fetchGames = async () => {
@@ -52,6 +57,18 @@ export default function Store() {
         // Extract all unique genres
         const uniqueGenres = Array.from(new Set(data.map((game: any) => game.genre)));
         setGenres(uniqueGenres.filter(Boolean) as string[]); // Filter out null values
+        
+        // If user is logged in, fetch their wishlist
+        if (user) {
+          const { data: wishlistData, error: wishlistError } = await supabase
+            .from('wishlist')
+            .select('game_id')
+            .eq('user_id', user.id);
+            
+          if (!wishlistError && wishlistData) {
+            setWishlistItems(wishlistData.map(item => item.game_id));
+          }
+        }
       } catch (error) {
         console.error('Error fetching games:', error);
       } finally {
@@ -60,7 +77,7 @@ export default function Store() {
     };
     
     fetchGames();
-  }, []);
+  }, [user]);
   
   const filteredGames = games.filter(game => {
     const matchesSearch = game.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -73,6 +90,62 @@ export default function Store() {
   
   const handleAddToCart = (game: Game) => {
     addToCart(game);
+    toast({
+      title: 'Added to cart',
+      description: `${game.title} has been added to your cart`,
+    });
+  };
+  
+  const handleToggleWishlist = async (gameId: string, title: string) => {
+    if (!user) {
+      toast({
+        title: 'Authentication required',
+        description: 'Please sign in to add games to your wishlist',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    try {
+      const isInWishlist = wishlistItems.includes(gameId);
+      
+      if (isInWishlist) {
+        // Remove from wishlist
+        await supabase
+          .from('wishlist')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('game_id', gameId);
+          
+        setWishlistItems(wishlistItems.filter(id => id !== gameId));
+        
+        toast({
+          title: 'Removed from wishlist',
+          description: `${title} has been removed from your wishlist`,
+        });
+      } else {
+        // Add to wishlist
+        await supabase
+          .from('wishlist')
+          .insert({
+            user_id: user.id,
+            game_id: gameId
+          });
+          
+        setWishlistItems([...wishlistItems, gameId]);
+        
+        toast({
+          title: 'Added to wishlist',
+          description: `${title} has been added to your wishlist`,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -172,18 +245,30 @@ export default function Store() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredGames.map((game) => (
                   <Card key={game.id} className="overflow-hidden flex flex-col">
-                    <Link to={`/game/${game.id}`} className="h-40 bg-cover bg-center relative group">
-                      <div 
-                        className="absolute inset-0 bg-cover bg-center" 
-                        style={{ backgroundImage: `url(${game.image_url})` }}
-                      ></div>
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
-                        <Button variant="secondary" size="sm" className="gap-1">
-                          <Info className="h-4 w-4" />
-                          View Details
-                        </Button>
-                      </div>
-                    </Link>
+                    <div className="relative">
+                      <Link to={`/game/${game.id}`} className="block h-40 bg-cover bg-center relative group">
+                        <div 
+                          className="absolute inset-0 bg-cover bg-center" 
+                          style={{ backgroundImage: `url(${game.image_url})` }}
+                        ></div>
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-300">
+                          <Button variant="secondary" size="sm" className="gap-1">
+                            <Info className="h-4 w-4" />
+                            View Details
+                          </Button>
+                        </div>
+                      </Link>
+                      
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className={`absolute top-2 right-2 z-10 ${wishlistItems.includes(game.id) ? 'text-red-500' : 'text-white'}`}
+                        onClick={() => handleToggleWishlist(game.id, game.title)}
+                      >
+                        <Heart className={`h-5 w-5 ${wishlistItems.includes(game.id) ? 'fill-current' : ''}`} />
+                      </Button>
+                    </div>
+                    
                     <CardHeader className="pb-2">
                       <Link to={`/game/${game.id}`}>
                         <CardTitle className="line-clamp-1 hover:text-primary transition-colors">

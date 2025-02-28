@@ -11,8 +11,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import { Heart, ShoppingCart, Clock, Tag, Award, Server, ArrowLeft, Check, Layers, Monitor, Cpu, HardDrive, Play } from 'lucide-react';
+import { Heart, ShoppingCart, Clock, Tag, Award, Server, ArrowLeft, Check, Layers, Monitor, Cpu, HardDrive, Play, Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Progress } from '@/components/ui/progress';
 import { GameDetail, parseJsonToSystemRequirements, parseJsonToMediaGallery } from '@/types/supabase-extensions';
 
 export default function GameDetails() {
@@ -21,6 +22,8 @@ export default function GameDetails() {
   const [loading, setLoading] = useState(true);
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [isInLibrary, setIsInLibrary] = useState(false);
+  const [installing, setInstalling] = useState(false);
+  const [installProgress, setInstallProgress] = useState(0);
   const { toast } = useToast();
   const { addToCart, isInCart } = useCart();
   const { user } = useAuth();
@@ -47,25 +50,23 @@ export default function GameDetails() {
           .rpc('get_game_details', { game_id: id });
           
         if (detailsError) {
-          console.warn('Could not fetch game details using RPC, falling back to direct query:', detailsError);
+          console.error('Could not fetch game details using RPC, falling back to direct query:', detailsError);
           
           // Fallback: direct query to game_details table
-          const detailsResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/game_details?id=eq.${id}&select=*`, {
-            headers: {
-              'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-              'Content-Type': 'application/json'
-            }
-          });
+          const { data: detailsResult, error: fallbackError } = await supabase
+            .from('game_details')
+            .select('*')
+            .eq('id', id)
+            .single();
           
-          const detailsResult = await detailsResponse.json();
-          const gameDetails = detailsResult[0] || {};
+          if (fallbackError) throw fallbackError;
           
           // Combine the data
           const gameDetail: GameDetail = {
             ...gameData,
-            ...gameDetails,
-            system_requirements: parseJsonToSystemRequirements(gameDetails?.system_requirements),
-            media_gallery: parseJsonToMediaGallery(gameDetails?.media_gallery)
+            ...(detailsResult || {}),
+            system_requirements: parseJsonToSystemRequirements(detailsResult?.system_requirements),
+            media_gallery: parseJsonToMediaGallery(detailsResult?.media_gallery)
           };
           
           setGame(gameDetail);
@@ -84,22 +85,15 @@ export default function GameDetails() {
         // Track this view in user activity if logged in
         if (user) {
           try {
-            // Use REST API endpoint instead of supabase client
-            await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/user_activity`, {
-              method: 'POST',
-              headers: {
-                'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${await supabase.auth.getSession().then(res => res.data.session?.access_token)}`,
-                'Content-Type': 'application/json',
-                'Prefer': 'return=minimal'
-              },
-              body: JSON.stringify({
+            // Log view activity
+            await supabase
+              .from('user_activity')
+              .insert({
                 user_id: user.id,
                 game_id: id,
                 activity_type: 'view',
                 details: { source: 'game_details_page' }
-              })
-            });
+              });
               
             // Check if game is in user's wishlist
             const { data: wishlistData } = await supabase
@@ -137,7 +131,7 @@ export default function GameDetails() {
     }
     
     fetchGameDetails();
-  }, [id, user]);
+  }, [id, user, toast]);
   
   const handleAddToCart = () => {
     if (!game) return;
@@ -151,6 +145,11 @@ export default function GameDetails() {
       genre: game.genre,
       description: game.description,
       rating: game.rating
+    });
+    
+    toast({
+      title: 'Added to cart',
+      description: `${game.title} has been added to your cart`,
     });
   };
   
@@ -204,6 +203,30 @@ export default function GameDetails() {
         variant: 'destructive',
       });
     }
+  };
+  
+  const handleInstall = () => {
+    if (!game) return;
+    
+    setInstalling(true);
+    setInstallProgress(0);
+    
+    // Simulate installation progress
+    const interval = setInterval(() => {
+      setInstallProgress(prev => {
+        const newProgress = prev + Math.random() * 10;
+        if (newProgress >= 100) {
+          clearInterval(interval);
+          setInstalling(false);
+          toast({
+            title: 'Installation Complete',
+            description: `${game.title} has been installed successfully`,
+          });
+          return 100;
+        }
+        return newProgress;
+      });
+    }, 300);
   };
   
   const handleBuyNow = () => {
@@ -506,13 +529,13 @@ export default function GameDetails() {
                 {/* Price */}
                 <div className="flex items-center justify-between">
                   <span className="text-2xl font-bold">
-                    {game.is_free ? 'FREE' : `$${game.price.toFixed(2)}`}
+                    {game.is_free ? 'FREE' : `$${game.price?.toFixed(2) || '0.00'}`}
                   </span>
                   <div className="flex items-center space-x-1">
                     {[...Array(5)].map((_, i) => (
                       <svg 
                         key={i} 
-                        className={`w-5 h-5 ${i < game.rating ? 'text-yellow-500' : 'text-gray-300'}`} 
+                        className={`w-5 h-5 ${i < (game.rating || 0) ? 'text-yellow-500' : 'text-gray-300'}`} 
                         fill="currentColor" 
                         viewBox="0 0 20 20"
                       >
@@ -527,10 +550,19 @@ export default function GameDetails() {
                 {/* Action buttons */}
                 <div className="space-y-3">
                   {isInLibrary ? (
-                    <Button className="w-full" onClick={() => navigate('/library')}>
-                      <Play className="h-4 w-4 mr-2" />
-                      Play Game
-                    </Button>
+                    installing ? (
+                      <div className="space-y-2">
+                        <Progress value={installProgress} />
+                        <p className="text-sm text-center text-muted-foreground">
+                          Installing... {Math.round(installProgress)}%
+                        </p>
+                      </div>
+                    ) : (
+                      <Button className="w-full" onClick={handleInstall}>
+                        <Play className="h-4 w-4 mr-2" />
+                        {installProgress === 100 ? 'Play Game' : 'Install Game'}
+                      </Button>
+                    )
                   ) : (
                     <>
                       {isInCart(game.id) ? (
