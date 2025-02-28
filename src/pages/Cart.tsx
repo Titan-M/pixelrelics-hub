@@ -1,5 +1,4 @@
 
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
@@ -23,11 +22,6 @@ export default function Cart() {
   // Apply a fake discount (10%)
   const discount = subtotal > 0 ? subtotal * 0.1 : 0;
   const total = subtotal - discount;
-
-  if (!user) {
-    navigate('/login');
-    return null;
-  }
   
   if (cartCount === 0) {
     return (
