@@ -14,18 +14,21 @@ export type Database = {
           added_at: string
           game_id: string
           id: string
+          quantity: number
           user_id: string
         }
         Insert: {
           added_at?: string
           game_id: string
           id?: string
+          quantity?: number
           user_id: string
         }
         Update: {
           added_at?: string
           game_id?: string
           id?: string
+          quantity?: number
           user_id?: string
         }
         Relationships: [
@@ -38,11 +41,160 @@ export type Database = {
           },
         ]
       }
+      community: {
+        Row: {
+          created_at: string
+          faq_id: string | null
+          game_id: string | null
+          id: number
+          moderator_id: string | null
+          news_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          faq_id?: string | null
+          game_id?: string | null
+          id?: number
+          moderator_id?: string | null
+          news_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          faq_id?: string | null
+          game_id?: string | null
+          id?: number
+          moderator_id?: string | null
+          news_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_faq_id_fkey"
+            columns: ["faq_id"]
+            isOneToOne: false
+            referencedRelation: "faq"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_moderator_id_fkey"
+            columns: ["moderator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "news"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      creditcard_payments: {
+        Row: {
+          created_at: string
+          id: number
+          payment_id: number
+          user_id: string | null
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          payment_id: number
+          user_id?: string | null
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          payment_id?: number
+          user_id?: string | null
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creditcard_payments_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creditcard_payments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creditcard_payments_username_fkey"
+            columns: ["username"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["username"]
+          },
+        ]
+      }
+      debitcard_payments: {
+        Row: {
+          created_at: string
+          id: number
+          payment_id: number
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          payment_id: number
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          payment_id?: number
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "debitcard_payments_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "debitcard_payments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "debitcard_payments_username_fkey"
+            columns: ["username"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["username"]
+          },
+        ]
+      }
       faq: {
         Row: {
           answer: string
           category: string | null
           created_at: string
+          created_by: string | null
           id: string
           order_number: number | null
           question: string
@@ -51,6 +203,7 @@ export type Database = {
           answer: string
           category?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
           order_number?: number | null
           question: string
@@ -59,9 +212,33 @@ export type Database = {
           answer?: string
           category?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
           order_number?: number | null
           question?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faq_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      free_games: {
+        Row: {
+          created_at: string
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
         }
         Relationships: []
       }
@@ -112,6 +289,7 @@ export type Database = {
       games: {
         Row: {
           created_at: string
+          created_by: string | null
           description: string | null
           genre: string | null
           id: string
@@ -123,6 +301,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           description?: string | null
           genre?: string | null
           id?: string
@@ -134,6 +313,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           description?: string | null
           genre?: string | null
           id?: string
@@ -143,12 +323,22 @@ export type Database = {
           rating?: number | null
           title?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "games_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       news: {
         Row: {
+          author_id: string | null
           category: string | null
           content: string
+          game_id: string | null
           id: string
           image_url: string | null
           is_featured: boolean | null
@@ -156,8 +346,10 @@ export type Database = {
           title: string
         }
         Insert: {
+          author_id?: string | null
           category?: string | null
           content: string
+          game_id?: string | null
           id?: string
           image_url?: string | null
           is_featured?: boolean | null
@@ -165,15 +357,92 @@ export type Database = {
           title: string
         }
         Update: {
+          author_id?: string | null
           category?: string | null
           content?: string
+          game_id?: string | null
           id?: string
           image_url?: string | null
           is_featured?: boolean | null
           published_at?: string
           title?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "news_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "news_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      paid_games: {
+        Row: {
+          created_at: string
+          discount_percentage: number | null
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          discount_percentage?: number | null
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          discount_percentage?: number | null
+          id?: number
+        }
         Relationships: []
+      }
+      payments: {
+        Row: {
+          created_at: string
+          game_id: string | null
+          id: number
+          payment_type: string
+          status: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          game_id?: string | null
+          id?: number
+          payment_type: string
+          status?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          game_id?: string | null
+          id?: number
+          payment_type?: string
+          status?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_username_fkey"
+            columns: ["username"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["username"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -185,7 +454,7 @@ export type Database = {
           member_since: string | null
           preferences: Json | null
           social_links: Json | null
-          username: string | null
+          username: string
           website: string | null
         }
         Insert: {
@@ -197,7 +466,7 @@ export type Database = {
           member_since?: string | null
           preferences?: Json | null
           social_links?: Json | null
-          username?: string | null
+          username: string
           website?: string | null
         }
         Update: {
@@ -209,10 +478,56 @@ export type Database = {
           member_since?: string | null
           preferences?: Json | null
           social_links?: Json | null
-          username?: string | null
+          username?: string
           website?: string | null
         }
         Relationships: []
+      }
+      upi_payments: {
+        Row: {
+          created_at: string
+          id: number
+          payment_id: number
+          user_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          payment_id: number
+          user_id: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          payment_id?: number
+          user_id?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upi_payments_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upi_payments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "upi_payments_username_fkey"
+            columns: ["username"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["username"]
+          },
+        ]
       }
       user_activity: {
         Row: {
@@ -221,6 +536,7 @@ export type Database = {
           details: Json | null
           game_id: string
           id: string
+          library_entry_id: string | null
           user_id: string
         }
         Insert: {
@@ -229,6 +545,7 @@ export type Database = {
           details?: Json | null
           game_id: string
           id?: string
+          library_entry_id?: string | null
           user_id: string
         }
         Update: {
@@ -237,6 +554,7 @@ export type Database = {
           details?: Json | null
           game_id?: string
           id?: string
+          library_entry_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -247,6 +565,13 @@ export type Database = {
             referencedRelation: "games"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_activity_library_entry_id_fkey"
+            columns: ["library_entry_id"]
+            isOneToOne: false
+            referencedRelation: "user_library"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_library: {
@@ -255,6 +580,8 @@ export type Database = {
           id: string
           is_installed: boolean | null
           last_played: string | null
+          payment_id: number | null
+          playtime_minutes: number | null
           purchase_date: string
           user_id: string
         }
@@ -263,6 +590,8 @@ export type Database = {
           id?: string
           is_installed?: boolean | null
           last_played?: string | null
+          payment_id?: number | null
+          playtime_minutes?: number | null
           purchase_date?: string
           user_id: string
         }
@@ -271,6 +600,8 @@ export type Database = {
           id?: string
           is_installed?: boolean | null
           last_played?: string | null
+          payment_id?: number | null
+          playtime_minutes?: number | null
           purchase_date?: string
           user_id?: string
         }
@@ -282,6 +613,13 @@ export type Database = {
             referencedRelation: "games"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_library_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
         ]
       }
       wishlist: {
@@ -289,18 +627,21 @@ export type Database = {
           added_at: string
           game_id: string
           id: string
+          priority: number | null
           user_id: string
         }
         Insert: {
           added_at?: string
           game_id: string
           id?: string
+          priority?: number | null
           user_id: string
         }
         Update: {
           added_at?: string
           game_id?: string
           id?: string
+          priority?: number | null
           user_id?: string
         }
         Relationships: [

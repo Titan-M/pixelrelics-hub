@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
@@ -46,37 +45,28 @@ export default function GameDetails() {
         if (gameError) throw gameError;
         
         // Fetch detailed game info
-        const { data: detailsData, error: detailsError } = await supabase
-          .rpc('get_game_details', { game_id: id });
-          
+        const { data: detailsResult, error: detailsError } = await supabase
+          .from('game_details')
+          .select('*')
+          .eq('id', id)
+          .single();
+        
         if (detailsError) {
-          console.error('Could not fetch game details using RPC, falling back to direct query:', detailsError);
+          console.error('Could not fetch game details:', detailsError);
           
-          // Fallback: direct query to game_details table
-          const { data: detailsResult, error: fallbackError } = await supabase
-            .from('game_details')
-            .select('*')
-            .eq('id', id)
-            .single();
-          
-          if (fallbackError) throw fallbackError;
-          
-          // Combine the data
+          // Create game detail without detailed info
           const gameDetail: GameDetail = {
-            ...gameData,
-            ...(detailsResult || {}),
-            system_requirements: parseJsonToSystemRequirements(detailsResult?.system_requirements),
-            media_gallery: parseJsonToMediaGallery(detailsResult?.media_gallery)
+            ...gameData
           };
           
           setGame(gameDetail);
         } else {
-          // Process with RPC result
+          // Process with detailed info
           const combinedData: GameDetail = {
             ...gameData,
-            ...(detailsData || {}),
-            system_requirements: parseJsonToSystemRequirements(detailsData?.system_requirements),
-            media_gallery: parseJsonToMediaGallery(detailsData?.media_gallery)
+            ...detailsResult,
+            system_requirements: parseJsonToSystemRequirements(detailsResult.system_requirements),
+            media_gallery: parseJsonToMediaGallery(detailsResult.media_gallery)
           };
           
           setGame(combinedData);
