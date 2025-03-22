@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
@@ -35,6 +36,7 @@ export default function Store() {
   const [genres, setGenres] = useState<string[]>([]);
   const [wishlistItems, setWishlistItems] = useState<string[]>([]);
   const [wishlistLoading, setWishlistLoading] = useState<string | null>(null);
+  const [userLibrary, setUserLibrary] = useState<string[]>([]);
   const { addToCart, isInCart } = useCart();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -42,6 +44,23 @@ export default function Store() {
   useEffect(() => {
     const fetchGames = async () => {
       try {
+        setLoading(true);
+        
+        // First, if user is logged in, fetch their library
+        let userOwnedGames: string[] = [];
+        if (user) {
+          const { data: libraryData, error: libraryError } = await supabase
+            .from('user_library')
+            .select('game_id')
+            .eq('user_id', user.id);
+            
+          if (!libraryError && libraryData) {
+            userOwnedGames = libraryData.map(item => item.game_id);
+            setUserLibrary(userOwnedGames);
+          }
+        }
+        
+        // Then fetch all games
         const { data, error } = await supabase
           .from('games')
           .select('*');
@@ -50,7 +69,13 @@ export default function Store() {
           throw error;
         }
         
-        setGames(data as Game[]);
+        // Filter out games that the user already owns
+        let filteredGames = data;
+        if (user && userOwnedGames.length > 0) {
+          filteredGames = data.filter((game: Game) => !userOwnedGames.includes(game.id));
+        }
+        
+        setGames(filteredGames as Game[]);
         
         const uniqueGenres = Array.from(new Set(data.map((game: any) => game.genre)));
         setGenres(uniqueGenres.filter(Boolean) as string[]);

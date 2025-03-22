@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { GameCard } from "./GameCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,6 +6,7 @@ import { Search, Filter, SlidersHorizontal } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from "lucide-react";
+import { useAuth } from '@/context/AuthContext';
 
 type Game = {
   id: string;
@@ -26,11 +26,27 @@ export function GameGrid() {
   const [loading, setLoading] = useState(true);
   const [priceRange, setPriceRange] = useState([0, 100]);
   const [maxPrice, setMaxPrice] = useState(100);
+  const [userLibrary, setUserLibrary] = useState<string[]>([]);
+  const { user } = useAuth();
 
   useEffect(() => {
     async function fetchGames() {
       setLoading(true);
       try {
+        // First, if user is logged in, fetch their library
+        let userOwnedGames: string[] = [];
+        if (user) {
+          const { data: libraryData, error: libraryError } = await supabase
+            .from('user_library')
+            .select('game_id')
+            .eq('user_id', user.id);
+            
+          if (!libraryError && libraryData) {
+            userOwnedGames = libraryData.map(item => item.game_id);
+            setUserLibrary(userOwnedGames);
+          }
+        }
+        
         const { data, error } = await supabase
           .from('games')
           .select('*');
@@ -38,8 +54,14 @@ export function GameGrid() {
         if (error) throw error;
         
         if (data) {
+          // Filter out games that the user already owns
+          let filteredData = data;
+          if (user && userOwnedGames.length > 0) {
+            filteredData = data.filter(game => !userOwnedGames.includes(game.id));
+          }
+          
           // Format the data
-          const formattedGames = data.map(game => ({
+          const formattedGames = filteredData.map(game => ({
             id: game.id,
             title: game.title,
             image_url: game.image_url || 'https://images.unsplash.com/photo-1593305841991-05c297ba4575?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
@@ -67,7 +89,7 @@ export function GameGrid() {
     }
     
     fetchGames();
-  }, []);
+  }, [user]);
 
   const filteredGames = games.filter((game) => {
     const matchesSearch = game.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
