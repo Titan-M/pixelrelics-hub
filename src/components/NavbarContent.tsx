@@ -1,6 +1,6 @@
 
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Library, Newspaper, LifeBuoy, User, LogOut, LogIn } from 'lucide-react';
+import { ShoppingCart, Library, Newspaper, LifeBuoy, User, LogOut, LogIn, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
@@ -36,12 +36,24 @@ export function NavbarContent() {
       </div>
 
       <div className="flex items-center space-x-4">
+        {/* Wishlist button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative"
+          onClick={() => navigate('/wishlist')}
+          aria-label="Wishlist"
+        >
+          <Heart className="h-5 w-5" />
+        </Button>
+        
         {/* Cart button with counter */}
         <Button
           variant="ghost"
           size="icon"
           className="relative"
           onClick={() => navigate('/cart')}
+          aria-label="Cart"
         >
           <ShoppingCart className="h-5 w-5" />
           {cartCount > 0 && (
@@ -72,6 +84,10 @@ export function NavbarContent() {
                 <Library className="mr-2 h-4 w-4" />
                 <span>My Library</span>
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/wishlist')}>
+                <Heart className="mr-2 h-4 w-4" />
+                <span>Wishlist</span>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => signOut()}>
                 <LogOut className="mr-2 h-4 w-4" />
@@ -97,13 +113,13 @@ export function NavbarContent() {
           <Library className="h-5 w-5" />
           <span className="text-xs mt-1">Library</span>
         </Link>
+        <Link to="/wishlist" className="flex-1 flex flex-col items-center justify-center py-2">
+          <Heart className="h-5 w-5" />
+          <span className="text-xs mt-1">Wishlist</span>
+        </Link>
         <Link to="/news" className="flex-1 flex flex-col items-center justify-center py-2">
           <Newspaper className="h-5 w-5" />
           <span className="text-xs mt-1">News</span>
-        </Link>
-        <Link to="/support" className="flex-1 flex flex-col items-center justify-center py-2">
-          <LifeBuoy className="h-5 w-5" />
-          <span className="text-xs mt-1">Support</span>
         </Link>
       </div>
     </>

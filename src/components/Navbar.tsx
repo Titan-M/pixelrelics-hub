@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ export function Navbar() {
   const menuItems = [
     { name: "Store", path: "/store" },
     { name: "Library", path: "/library" },
+    { name: "Wishlist", path: "/wishlist" },
     { name: "News", path: "/news" },
     { name: "Support", path: "/support" },
   ];
@@ -91,6 +93,15 @@ export function Navbar() {
                   variant="ghost"
                   size="icon"
                   className="relative hover:bg-primary/10"
+                  onClick={() => navigate('/wishlist')}
+                >
+                  <Heart className="h-5 w-5" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative hover:bg-primary/10"
                   onClick={() => navigate('/cart')}
                 >
                   <ShoppingCart className="h-5 w-5" />
@@ -99,10 +110,6 @@ export function Navbar() {
                       {cartCount}
                     </span>
                   )}
-                </Button>
-
-                <Button variant="ghost" size="icon" className="hover:bg-primary/10">
-                  <Heart className="h-5 w-5" />
                 </Button>
 
                 <DropdownMenu>
@@ -121,6 +128,9 @@ export function Navbar() {
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/library')}>
                       Library
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/wishlist')}>
+                      Wishlist
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>

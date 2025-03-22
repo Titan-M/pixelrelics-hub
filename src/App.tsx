@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 
@@ -15,6 +14,7 @@ import Checkout from '@/pages/Checkout';
 import Profile from '@/pages/Profile';
 import GameDetails from '@/pages/GameDetails';
 import NotFound from '@/pages/NotFound';
+import Wishlist from './pages/Wishlist';
 
 // Components and Providers
 import { ProtectedRoute } from '@/components/ProtectedRoute';
@@ -57,6 +57,8 @@ function App() {
                 <Profile />
               </ProtectedRoute>
             } />
+            
+            <Route path="/wishlist" element={<Wishlist />} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>
