@@ -76,3 +76,19 @@ export function parseJsonToMediaGallery(json: Json | null): MediaGallery | undef
   // If it's already an object, return it directly
   return json as MediaGallery;
 }
+
+// Function to safely parse any JSON field
+export function parseJsonField<T>(json: Json | null, defaultValue: T): T {
+  if (!json) return defaultValue;
+  
+  if (typeof json === 'string') {
+    try {
+      return JSON.parse(json) as T;
+    } catch (e) {
+      console.error('Error parsing JSON field:', e);
+      return defaultValue;
+    }
+  }
+  
+  return json as T;
+}
