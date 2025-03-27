@@ -14,8 +14,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { RefreshCcw, Save, Globe, MapPin, Calendar } from 'lucide-react';
+import { RefreshCcw, Save, Globe, MapPin, Calendar, Edit, Check, X } from 'lucide-react';
 import { Json } from '@/integrations/supabase/types';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
 
 // Extended Profile Type
 interface ExtendedProfile {
@@ -38,6 +46,15 @@ interface ExtendedProfile {
     language?: string;
   } | null;
   member_since: string | null;
+}
+
+// User Activity Type
+interface UserActivity {
+  id: string;
+  activity_type: string;
+  details: any;
+  created_at: string;
+  game_title?: string;
 }
 
 // Helper functions to safely parse JSON
@@ -77,6 +94,9 @@ export default function Profile() {
   const [profile, setProfile] = useState<ExtendedProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saveLoading, setSaveLoading] = useState(false);
+  const [activities, setActivities] = useState<UserActivity[]>([]);
+  const [activityLoading, setActivityLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
   
   const [formData, setFormData] = useState({
     username: '',
@@ -140,7 +160,60 @@ export default function Profile() {
     }
     
     getProfile();
+    fetchUserActivities();
   }, [user, navigate]);
+  
+  const fetchUserActivities = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setActivityLoading(true);
+      
+      // Get user activities
+      const { data: activityData, error: activityError } = await supabase
+        .from('user_activity')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (activityError) throw activityError;
+      
+      // Get game titles for activities that have game_id
+      const gameIds = activityData
+        .filter(activity => activity.game_id && activity.game_id !== '00000000-0000-0000-0000-000000000000')
+        .map(activity => activity.game_id);
+      
+      let gameTitles: Record<string, string> = {};
+      
+      if (gameIds.length > 0) {
+        const { data: gamesData, error: gamesError } = await supabase
+          .from('games')
+          .select('id, title')
+          .in('id', gameIds);
+        
+        if (gamesError) throw gamesError;
+        
+        gameTitles = Object.fromEntries(
+          gamesData.map(game => [game.id, game.title])
+        );
+      }
+      
+      // Combine activity data with game titles
+      const activitiesWithGameTitles = activityData.map(activity => ({
+        ...activity,
+        game_title: activity.game_id && activity.game_id !== '00000000-0000-0000-0000-000000000000' 
+          ? gameTitles[activity.game_id] 
+          : undefined
+      }));
+      
+      setActivities(activitiesWithGameTitles);
+    } catch (error: any) {
+      console.error('Error fetching user activities:', error);
+    } finally {
+      setActivityLoading(false);
+    }
+  };
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
@@ -179,7 +252,7 @@ export default function Profile() {
         description: 'Your profile has been updated successfully.',
       });
       
-      // Track user activity - use REST API directly to avoid type issues
+      // Track user activity
       await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/user_activity`, {
         method: 'POST',
         headers: {
@@ -195,6 +268,12 @@ export default function Profile() {
           details: { fields_updated: Object.keys(updateData) }
         })
       });
+      
+      // Toggle edit mode off after saving
+      setEditMode(false);
+      
+      // Update activities list
+      fetchUserActivities();
     } catch (error: any) {
       toast({
         title: 'Error updating profile',
@@ -205,6 +284,13 @@ export default function Profile() {
     } finally {
       setSaveLoading(false);
     }
+  };
+  
+  const formatActivityType = (type: string) => {
+    return type
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
   
   const renderProfileSkeleton = () => (
@@ -225,6 +311,20 @@ export default function Profile() {
     </div>
   );
   
+  const renderActivitiesSkeleton = () => (
+    <div className="space-y-4">
+      {[...Array(5)].map((_, i) => (
+        <div key={i} className="flex justify-between items-center p-4 border rounded-md">
+          <div className="space-y-2 flex-1">
+            <div className="h-5 w-1/3 bg-slate-200 animate-pulse rounded"></div>
+            <div className="h-4 w-1/2 bg-slate-200 animate-pulse rounded"></div>
+          </div>
+          <div className="h-5 w-1/4 bg-slate-200 animate-pulse rounded"></div>
+        </div>
+      ))}
+    </div>
+  );
+  
   if (!user) {
     navigate('/login');
     return null;
@@ -236,12 +336,25 @@ export default function Profile() {
       
       <main className="flex-1 container mx-auto py-8 px-4">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-8">Your Profile</h1>
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold">Your Profile</h1>
+            
+            {!editMode && (
+              <Button 
+                variant="outline" 
+                onClick={() => setEditMode(true)}
+                className="hover-lift transition-all"
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Profile
+              </Button>
+            )}
+          </div>
           
           <Tabs defaultValue="profile">
             <TabsList className="grid w-full grid-cols-2 mb-8">
-              <TabsTrigger value="profile">Profile</TabsTrigger>
-              <TabsTrigger value="activities">Activities</TabsTrigger>
+              <TabsTrigger value="profile" className="transition-all">Profile</TabsTrigger>
+              <TabsTrigger value="activities" className="transition-all">Activities</TabsTrigger>
             </TabsList>
             
             <TabsContent value="profile" className="space-y-8">
@@ -258,9 +371,9 @@ export default function Profile() {
                       </AvatarFallback>
                     </Avatar>
                     
-                    <div>
+                    <div className="text-left">
                       <h2 className="text-2xl font-bold">{profile?.username || 'User'}</h2>
-                      <p className="text-muted-foreground">
+                      <p className="text-muted-foreground flex items-center">
                         <Calendar className="inline-block h-4 w-4 mr-1" />
                         Joined {new Date(profile?.created_at || Date.now()).toLocaleDateString()}
                       </p>
@@ -272,130 +385,194 @@ export default function Profile() {
                   {/* Profile Form */}
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
+                      <div className="space-y-2 text-left">
                         <Label htmlFor="username">Username</Label>
-                        <Input 
-                          id="username"
-                          name="username"
-                          value={formData.username}
-                          onChange={handleInputChange}
-                          placeholder="Your username"
-                        />
+                        {editMode ? (
+                          <Input 
+                            id="username"
+                            name="username"
+                            value={formData.username}
+                            onChange={handleInputChange}
+                            placeholder="Your username"
+                            className="transition-all"
+                          />
+                        ) : (
+                          <p className="p-2 border border-transparent rounded-md bg-secondary/30">{formData.username}</p>
+                        )}
                       </div>
                       
-                      <div className="space-y-2">
+                      <div className="space-y-2 text-left">
                         <Label htmlFor="website">Website</Label>
-                        <div className="relative">
-                          <Globe className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input 
-                            id="website"
-                            name="website"
-                            value={formData.website}
-                            onChange={handleInputChange}
-                            placeholder="https://example.com"
-                            className="pl-8"
-                          />
-                        </div>
+                        {editMode ? (
+                          <div className="relative">
+                            <Globe className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input 
+                              id="website"
+                              name="website"
+                              value={formData.website}
+                              onChange={handleInputChange}
+                              placeholder="https://example.com"
+                              className="pl-8 transition-all"
+                            />
+                          </div>
+                        ) : (
+                          <p className="p-2 border border-transparent rounded-md bg-secondary/30 flex items-center">
+                            <Globe className="h-4 w-4 mr-2 text-muted-foreground" />
+                            {formData.website || 'Not specified'}
+                          </p>
+                        )}
                       </div>
                     </div>
                     
-                    <div className="space-y-2">
+                    <div className="space-y-2 text-left">
                       <Label htmlFor="bio">Bio</Label>
-                      <Textarea 
-                        id="bio"
-                        name="bio"
-                        value={formData.bio}
-                        onChange={handleInputChange}
-                        placeholder="Tell us about yourself..."
-                        rows={4}
-                      />
+                      {editMode ? (
+                        <Textarea 
+                          id="bio"
+                          name="bio"
+                          value={formData.bio}
+                          onChange={handleInputChange}
+                          placeholder="Tell us about yourself..."
+                          rows={4}
+                          className="transition-all"
+                        />
+                      ) : (
+                        <p className="p-3 border border-transparent rounded-md bg-secondary/30 min-h-[100px]">
+                          {formData.bio || 'No bio provided'}
+                        </p>
+                      )}
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
+                      <div className="space-y-2 text-left">
                         <Label htmlFor="location">Location</Label>
-                        <div className="relative">
-                          <MapPin className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input 
-                            id="location"
-                            name="location"
-                            value={formData.location}
-                            onChange={handleInputChange}
-                            placeholder="City, Country"
-                            className="pl-8"
-                          />
-                        </div>
+                        {editMode ? (
+                          <div className="relative">
+                            <MapPin className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input 
+                              id="location"
+                              name="location"
+                              value={formData.location}
+                              onChange={handleInputChange}
+                              placeholder="City, Country"
+                              className="pl-8 transition-all"
+                            />
+                          </div>
+                        ) : (
+                          <p className="p-2 border border-transparent rounded-md bg-secondary/30 flex items-center">
+                            <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                            {formData.location || 'Not specified'}
+                          </p>
+                        )}
                       </div>
                     </div>
                     
                     <Separator />
                     
-                    <h3 className="text-lg font-medium">Social Links</h3>
+                    <h3 className="text-lg font-medium text-left">Social Links</h3>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="social_twitter">Twitter</Label>
-                        <Input 
-                          id="social_twitter"
-                          name="social_twitter"
-                          value={formData.social_twitter}
-                          onChange={handleInputChange}
-                          placeholder="https://twitter.com/username"
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="social_github">GitHub</Label>
-                        <Input 
-                          id="social_github"
-                          name="social_github"
-                          value={formData.social_github}
-                          onChange={handleInputChange}
-                          placeholder="https://github.com/username"
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="social_instagram">Instagram</Label>
-                        <Input 
-                          id="social_instagram"
-                          name="social_instagram"
-                          value={formData.social_instagram}
-                          onChange={handleInputChange}
-                          placeholder="https://instagram.com/username"
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="social_linkedin">LinkedIn</Label>
-                        <Input 
-                          id="social_linkedin"
-                          name="social_linkedin"
-                          value={formData.social_linkedin}
-                          onChange={handleInputChange}
-                          placeholder="https://linkedin.com/in/username"
-                        />
-                      </div>
+                      {editMode ? (
+                        <>
+                          <div className="space-y-2 text-left">
+                            <Label htmlFor="social_twitter">Twitter</Label>
+                            <Input 
+                              id="social_twitter"
+                              name="social_twitter"
+                              value={formData.social_twitter}
+                              onChange={handleInputChange}
+                              placeholder="https://twitter.com/username"
+                              className="transition-all"
+                            />
+                          </div>
+                          
+                          <div className="space-y-2 text-left">
+                            <Label htmlFor="social_github">GitHub</Label>
+                            <Input 
+                              id="social_github"
+                              name="social_github"
+                              value={formData.social_github}
+                              onChange={handleInputChange}
+                              placeholder="https://github.com/username"
+                              className="transition-all"
+                            />
+                          </div>
+                          
+                          <div className="space-y-2 text-left">
+                            <Label htmlFor="social_instagram">Instagram</Label>
+                            <Input 
+                              id="social_instagram"
+                              name="social_instagram"
+                              value={formData.social_instagram}
+                              onChange={handleInputChange}
+                              placeholder="https://instagram.com/username"
+                              className="transition-all"
+                            />
+                          </div>
+                          
+                          <div className="space-y-2 text-left">
+                            <Label htmlFor="social_linkedin">LinkedIn</Label>
+                            <Input 
+                              id="social_linkedin"
+                              name="social_linkedin"
+                              value={formData.social_linkedin}
+                              onChange={handleInputChange}
+                              placeholder="https://linkedin.com/in/username"
+                              className="transition-all"
+                            />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="p-2 border border-transparent rounded-md bg-secondary/30 flex items-center">
+                            <span className="font-medium mr-2">Twitter:</span>
+                            {formData.social_twitter || 'Not linked'}
+                          </div>
+                          <div className="p-2 border border-transparent rounded-md bg-secondary/30 flex items-center">
+                            <span className="font-medium mr-2">GitHub:</span>
+                            {formData.social_github || 'Not linked'}
+                          </div>
+                          <div className="p-2 border border-transparent rounded-md bg-secondary/30 flex items-center">
+                            <span className="font-medium mr-2">Instagram:</span>
+                            {formData.social_instagram || 'Not linked'}
+                          </div>
+                          <div className="p-2 border border-transparent rounded-md bg-secondary/30 flex items-center">
+                            <span className="font-medium mr-2">LinkedIn:</span>
+                            {formData.social_linkedin || 'Not linked'}
+                          </div>
+                        </div>
+                      )}
                     </div>
                     
-                    <div className="flex justify-end">
-                      <Button 
-                        onClick={handleSaveProfile}
-                        disabled={saveLoading}
-                      >
-                        {saveLoading ? (
-                          <>
-                            <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
-                            Saving...
-                          </>
-                        ) : (
-                          <>
-                            <Save className="mr-2 h-4 w-4" />
-                            Save Changes
-                          </>
-                        )}
-                      </Button>
-                    </div>
+                    {editMode && (
+                      <div className="flex justify-end space-x-2">
+                        <Button 
+                          variant="outline"
+                          onClick={() => setEditMode(false)}
+                          className="transition-all"
+                        >
+                          <X className="mr-2 h-4 w-4" />
+                          Cancel
+                        </Button>
+                        <Button 
+                          onClick={handleSaveProfile}
+                          disabled={saveLoading}
+                          className="transition-all"
+                        >
+                          {saveLoading ? (
+                            <>
+                              <RefreshCcw className="mr-2 h-4 w-4 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="mr-2 h-4 w-4" />
+                              Save Changes
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -404,15 +581,60 @@ export default function Profile() {
             <TabsContent value="activities">
               <Card>
                 <CardHeader>
-                  <CardTitle>Recent Activity</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-left">Recent Activity</CardTitle>
+                  <CardDescription className="text-left">
                     A history of your recent activity on the platform
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground text-center py-8">
-                    Activity tracking is coming soon!
-                  </p>
+                  {activityLoading ? (
+                    renderActivitiesSkeleton()
+                  ) : activities.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Activity</TableHead>
+                          <TableHead>Details</TableHead>
+                          <TableHead className="text-right">Date</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {activities.map((activity) => (
+                          <TableRow key={activity.id} className="transition-all hover-lift">
+                            <TableCell className="font-medium">
+                              {formatActivityType(activity.activity_type)}
+                            </TableCell>
+                            <TableCell>
+                              {activity.game_title ? (
+                                <span>{activity.game_title}</span>
+                              ) : (
+                                <span>
+                                  {activity.details && typeof activity.details === 'object' 
+                                    ? Object.entries(activity.details)
+                                        .map(([key, value]) => {
+                                          if (Array.isArray(value)) {
+                                            return `${key}: ${value.join(', ')}`;
+                                          }
+                                          return `${key}: ${value}`;
+                                        })
+                                        .join(', ')
+                                    : JSON.stringify(activity.details)
+                                  }
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {new Date(activity.created_at).toLocaleDateString()}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <p className="text-muted-foreground text-center py-8">
+                      No recent activity to display
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>

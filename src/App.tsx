@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 
@@ -27,42 +28,47 @@ function App() {
     <Router>
       <AuthProvider>
         <CartProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/store" element={<Store />} />
-            <Route path="/game/:id" element={<GameDetails />} />
-            <Route path="/news" element={<News />} />
-            <Route path="/support" element={<Support />} />
-            
-            {/* Protected Routes */}
-            <Route path="/library" element={
-              <ProtectedRoute>
-                <Library />
-              </ProtectedRoute>
-            } />
-            <Route path="/cart" element={
-              <ProtectedRoute>
-                <Cart />
-              </ProtectedRoute>
-            } />
-            <Route path="/checkout" element={
-              <ProtectedRoute>
-                <Checkout />
-              </ProtectedRoute>
-            } />
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/wishlist" element={<Wishlist />} />
-            
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <Toaster />
+          <div className="min-h-screen flex flex-col">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/store" element={<Store />} />
+              <Route path="/game/:id" element={<GameDetails />} />
+              <Route path="/news" element={<News />} />
+              <Route path="/support" element={<Support />} />
+              
+              {/* Protected Routes */}
+              <Route path="/library" element={
+                <ProtectedRoute>
+                  <Library />
+                </ProtectedRoute>
+              } />
+              <Route path="/cart" element={
+                <ProtectedRoute>
+                  <Cart />
+                </ProtectedRoute>
+              } />
+              <Route path="/checkout" element={
+                <ProtectedRoute>
+                  <Checkout />
+                </ProtectedRoute>
+              } />
+              <Route path="/profile" element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } />
+              <Route path="/wishlist" element={
+                <ProtectedRoute>
+                  <Wishlist />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Toaster />
+          </div>
         </CartProvider>
       </AuthProvider>
     </Router>
