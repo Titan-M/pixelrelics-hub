@@ -30,42 +30,42 @@ function App() {
         <CartProvider>
           <div className="min-h-screen flex flex-col">
             <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/store" element={<Store />} />
-              <Route path="/game/:id" element={<GameDetails />} />
-              <Route path="/news" element={<News />} />
-              <Route path="/support" element={<Support />} />
+              <Route path="/" element={<div className="page-content"><Index /></div>} />
+              <Route path="/login" element={<div className="page-content"><Login /></div>} />
+              <Route path="/signup" element={<div className="page-content"><Signup /></div>} />
+              <Route path="/store" element={<div className="page-content"><Store /></div>} />
+              <Route path="/game/:id" element={<div className="page-content"><GameDetails /></div>} />
+              <Route path="/news" element={<div className="page-content"><News /></div>} />
+              <Route path="/support" element={<div className="page-content"><Support /></div>} />
               
               {/* Protected Routes */}
               <Route path="/library" element={
                 <ProtectedRoute>
-                  <Library />
+                  <div className="page-content"><Library /></div>
                 </ProtectedRoute>
               } />
               <Route path="/cart" element={
                 <ProtectedRoute>
-                  <Cart />
+                  <div className="page-content"><Cart /></div>
                 </ProtectedRoute>
               } />
               <Route path="/checkout" element={
                 <ProtectedRoute>
-                  <Checkout />
+                  <div className="page-content"><Checkout /></div>
                 </ProtectedRoute>
               } />
               <Route path="/profile" element={
                 <ProtectedRoute>
-                  <Profile />
+                  <div className="page-content"><Profile /></div>
                 </ProtectedRoute>
               } />
               <Route path="/wishlist" element={
                 <ProtectedRoute>
-                  <Wishlist />
+                  <div className="page-content"><Wishlist /></div>
                 </ProtectedRoute>
               } />
               
-              <Route path="*" element={<NotFound />} />
+              <Route path="*" element={<div className="page-content"><NotFound /></div>} />
             </Routes>
             <Toaster />
           </div>
