@@ -331,12 +331,12 @@ export default function Profile() {
   }
   
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       
-      <main className="flex-1 container mx-auto py-8 px-4">
+      <main className="flex-1 container mx-auto pt-6 pb-12 px-4 md:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <h1 className="text-3xl font-bold">Your Profile</h1>
             
             {!editMode && (
@@ -351,41 +351,41 @@ export default function Profile() {
             )}
           </div>
           
-          <Tabs defaultValue="profile">
-            <TabsList className="grid w-full grid-cols-2 mb-8">
+          <Tabs defaultValue="profile" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="profile" className="transition-all">Profile</TabsTrigger>
               <TabsTrigger value="activities" className="transition-all">Activities</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="profile" className="space-y-8">
+            <TabsContent value="profile" className="space-y-8 mt-2">
               {loading ? (
                 renderProfileSkeleton()
               ) : (
                 <>
                   {/* Profile Header */}
-                  <div className="flex items-center space-x-6">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 p-4 bg-card rounded-lg shadow-sm">
                     <Avatar className="h-20 w-20">
                       <AvatarImage src={profile?.avatar_url || ''} />
-                      <AvatarFallback className="text-lg">
+                      <AvatarFallback className="text-lg bg-primary/10 text-primary">
                         {profile?.username?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     
-                    <div className="text-left">
+                    <div>
                       <h2 className="text-2xl font-bold">{profile?.username || 'User'}</h2>
-                      <p className="text-muted-foreground flex items-center">
+                      <p className="text-muted-foreground flex items-center mt-1">
                         <Calendar className="inline-block h-4 w-4 mr-1" />
                         Joined {new Date(profile?.created_at || Date.now()).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
                   
-                  <Separator />
+                  <Separator className="my-6" />
                   
                   {/* Profile Form */}
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2 text-left">
+                      <div className="space-y-2">
                         <Label htmlFor="username">Username</Label>
                         {editMode ? (
                           <Input 
@@ -397,11 +397,11 @@ export default function Profile() {
                             className="transition-all"
                           />
                         ) : (
-                          <p className="p-2 border border-transparent rounded-md bg-secondary/30">{formData.username}</p>
+                          <p className="p-2 border rounded-md bg-secondary/30">{formData.username || 'Not set'}</p>
                         )}
                       </div>
                       
-                      <div className="space-y-2 text-left">
+                      <div className="space-y-2">
                         <Label htmlFor="website">Website</Label>
                         {editMode ? (
                           <div className="relative">
@@ -416,7 +416,7 @@ export default function Profile() {
                             />
                           </div>
                         ) : (
-                          <p className="p-2 border border-transparent rounded-md bg-secondary/30 flex items-center">
+                          <p className="p-2 border rounded-md bg-secondary/30 flex items-center">
                             <Globe className="h-4 w-4 mr-2 text-muted-foreground" />
                             {formData.website || 'Not specified'}
                           </p>
@@ -424,7 +424,7 @@ export default function Profile() {
                       </div>
                     </div>
                     
-                    <div className="space-y-2 text-left">
+                    <div className="space-y-2">
                       <Label htmlFor="bio">Bio</Label>
                       {editMode ? (
                         <Textarea 
@@ -437,14 +437,14 @@ export default function Profile() {
                           className="transition-all"
                         />
                       ) : (
-                        <p className="p-3 border border-transparent rounded-md bg-secondary/30 min-h-[100px]">
+                        <div className="p-3 border rounded-md bg-secondary/30 min-h-[100px] whitespace-pre-wrap">
                           {formData.bio || 'No bio provided'}
-                        </p>
+                        </div>
                       )}
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2 text-left">
+                      <div className="space-y-2">
                         <Label htmlFor="location">Location</Label>
                         {editMode ? (
                           <div className="relative">
@@ -459,7 +459,7 @@ export default function Profile() {
                             />
                           </div>
                         ) : (
-                          <p className="p-2 border border-transparent rounded-md bg-secondary/30 flex items-center">
+                          <p className="p-2 border rounded-md bg-secondary/30 flex items-center">
                             <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
                             {formData.location || 'Not specified'}
                           </p>
@@ -467,14 +467,14 @@ export default function Profile() {
                       </div>
                     </div>
                     
-                    <Separator />
+                    <Separator className="my-6" />
                     
-                    <h3 className="text-lg font-medium text-left">Social Links</h3>
+                    <h3 className="text-lg font-medium">Social Links</h3>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {editMode ? (
                         <>
-                          <div className="space-y-2 text-left">
+                          <div className="space-y-2">
                             <Label htmlFor="social_twitter">Twitter</Label>
                             <Input 
                               id="social_twitter"
@@ -486,7 +486,7 @@ export default function Profile() {
                             />
                           </div>
                           
-                          <div className="space-y-2 text-left">
+                          <div className="space-y-2">
                             <Label htmlFor="social_github">GitHub</Label>
                             <Input 
                               id="social_github"
@@ -498,7 +498,7 @@ export default function Profile() {
                             />
                           </div>
                           
-                          <div className="space-y-2 text-left">
+                          <div className="space-y-2">
                             <Label htmlFor="social_instagram">Instagram</Label>
                             <Input 
                               id="social_instagram"
@@ -510,7 +510,7 @@ export default function Profile() {
                             />
                           </div>
                           
-                          <div className="space-y-2 text-left">
+                          <div className="space-y-2">
                             <Label htmlFor="social_linkedin">LinkedIn</Label>
                             <Input 
                               id="social_linkedin"
@@ -524,28 +524,28 @@ export default function Profile() {
                         </>
                       ) : (
                         <div className="col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="p-2 border border-transparent rounded-md bg-secondary/30 flex items-center">
+                          <div className="p-2 border rounded-md bg-secondary/30 flex items-center">
                             <span className="font-medium mr-2">Twitter:</span>
-                            {formData.social_twitter || 'Not linked'}
+                            <span className="truncate">{formData.social_twitter || 'Not linked'}</span>
                           </div>
-                          <div className="p-2 border border-transparent rounded-md bg-secondary/30 flex items-center">
+                          <div className="p-2 border rounded-md bg-secondary/30 flex items-center">
                             <span className="font-medium mr-2">GitHub:</span>
-                            {formData.social_github || 'Not linked'}
+                            <span className="truncate">{formData.social_github || 'Not linked'}</span>
                           </div>
-                          <div className="p-2 border border-transparent rounded-md bg-secondary/30 flex items-center">
+                          <div className="p-2 border rounded-md bg-secondary/30 flex items-center">
                             <span className="font-medium mr-2">Instagram:</span>
-                            {formData.social_instagram || 'Not linked'}
+                            <span className="truncate">{formData.social_instagram || 'Not linked'}</span>
                           </div>
-                          <div className="p-2 border border-transparent rounded-md bg-secondary/30 flex items-center">
+                          <div className="p-2 border rounded-md bg-secondary/30 flex items-center">
                             <span className="font-medium mr-2">LinkedIn:</span>
-                            {formData.social_linkedin || 'Not linked'}
+                            <span className="truncate">{formData.social_linkedin || 'Not linked'}</span>
                           </div>
                         </div>
                       )}
                     </div>
                     
                     {editMode && (
-                      <div className="flex justify-end space-x-2">
+                      <div className="flex justify-end space-x-2 mt-8">
                         <Button 
                           variant="outline"
                           onClick={() => setEditMode(false)}
@@ -578,11 +578,11 @@ export default function Profile() {
               )}
             </TabsContent>
             
-            <TabsContent value="activities">
+            <TabsContent value="activities" className="mt-2">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-left">Recent Activity</CardTitle>
-                  <CardDescription className="text-left">
+                  <CardTitle>Recent Activity</CardTitle>
+                  <CardDescription>
                     A history of your recent activity on the platform
                   </CardDescription>
                 </CardHeader>
@@ -590,50 +590,52 @@ export default function Profile() {
                   {activityLoading ? (
                     renderActivitiesSkeleton()
                   ) : activities.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Activity</TableHead>
-                          <TableHead>Details</TableHead>
-                          <TableHead className="text-right">Date</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {activities.map((activity) => (
-                          <TableRow key={activity.id} className="transition-all hover-lift">
-                            <TableCell className="font-medium">
-                              {formatActivityType(activity.activity_type)}
-                            </TableCell>
-                            <TableCell>
-                              {activity.game_title ? (
-                                <span>{activity.game_title}</span>
-                              ) : (
-                                <span>
-                                  {activity.details && typeof activity.details === 'object' 
-                                    ? Object.entries(activity.details)
-                                        .map(([key, value]) => {
-                                          if (Array.isArray(value)) {
-                                            return `${key}: ${value.join(', ')}`;
-                                          }
-                                          return `${key}: ${value}`;
-                                        })
-                                        .join(', ')
-                                    : JSON.stringify(activity.details)
-                                  }
-                                </span>
-                              )}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {new Date(activity.created_at).toLocaleDateString()}
-                            </TableCell>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Activity</TableHead>
+                            <TableHead>Details</TableHead>
+                            <TableHead className="text-right">Date</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {activities.map((activity) => (
+                            <TableRow key={activity.id} className="transition-all hover-lift">
+                              <TableCell className="font-medium">
+                                {formatActivityType(activity.activity_type)}
+                              </TableCell>
+                              <TableCell>
+                                {activity.game_title ? (
+                                  <span>{activity.game_title}</span>
+                                ) : (
+                                  <span className="truncate max-w-xs inline-block">
+                                    {activity.details && typeof activity.details === 'object' 
+                                      ? Object.entries(activity.details)
+                                          .map(([key, value]) => {
+                                            if (Array.isArray(value)) {
+                                              return `${key}: ${value.join(', ')}`;
+                                            }
+                                            return `${key}: ${value}`;
+                                          })
+                                          .join(', ')
+                                      : JSON.stringify(activity.details)
+                                    }
+                                  </span>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right whitespace-nowrap">
+                                {new Date(activity.created_at).toLocaleDateString()}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   ) : (
-                    <p className="text-muted-foreground text-center py-8">
+                    <div className="text-muted-foreground text-center py-8">
                       No recent activity to display
-                    </p>
+                    </div>
                   )}
                 </CardContent>
               </Card>
