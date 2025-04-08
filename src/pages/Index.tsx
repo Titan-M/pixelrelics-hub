@@ -6,8 +6,18 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, TrendingUp, Trophy, Zap, Gamepad2, BarChart4 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
+
+// Category data with improved icons
+const categories = [
+  { name: "Action", icon: <Zap className="h-8 w-8" />, color: "from-red-500/20 to-orange-500/20" },
+  { name: "Adventure", icon: <Gamepad2 className="h-8 w-8" />, color: "from-blue-500/20 to-cyan-500/20" },
+  { name: "RPG", icon: <Trophy className="h-8 w-8" />, color: "from-purple-500/20 to-pink-500/20" },
+  { name: "Strategy", icon: <BarChart4 className="h-8 w-8" />, color: "from-green-500/20 to-emerald-500/20" },
+  { name: "Sports", icon: <TrendingUp className="h-8 w-8" />, color: "from-yellow-500/20 to-amber-500/20" },
+  { name: "Simulation", icon: <Gamepad2 className="h-8 w-8" />, color: "from-indigo-500/20 to-violet-500/20" },
+];
 
 // News type definition
 type NewsItem = {
@@ -20,20 +30,11 @@ type NewsItem = {
   published_at: string;
 };
 
-// Game category type
-type GameCategory = {
-  name: string;
-  icon: React.ReactNode;
-  color: string;
-};
-
 export default function Index() {
   const [featuredNews, setFeaturedNews] = useState<NewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [categories, setCategories] = useState<GameCategory[]>([]);
 
   useEffect(() => {
-    // Fetch featured news from the database
     const fetchFeaturedNews = async () => {
       try {
         const { data, error } = await supabase
@@ -51,53 +52,7 @@ export default function Index() {
       }
     };
     
-    // Fetch game genres/categories from the database
-    const fetchCategories = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('games')
-          .select('genre')
-          .not('genre', 'is', null);
-          
-        if (error) throw error;
-        
-        // Extract unique genres
-        const uniqueGenres = [...new Set(data.map(game => game.genre))];
-        
-        // Map genres to category objects with icons
-        const categoryIcons: Record<string, { icon: React.ReactNode, color: string }> = {
-          'Action': { icon: <Zap className="h-8 w-8" />, color: "from-red-500/20 to-orange-500/20" },
-          'Adventure': { icon: <Gamepad2 className="h-8 w-8" />, color: "from-blue-500/20 to-cyan-500/20" },
-          'RPG': { icon: <Trophy className="h-8 w-8" />, color: "from-purple-500/20 to-pink-500/20" },
-          'Strategy': { icon: <BarChart4 className="h-8 w-8" />, color: "from-green-500/20 to-emerald-500/20" },
-          'Sports': { icon: <TrendingUp className="h-8 w-8" />, color: "from-yellow-500/20 to-amber-500/20" },
-          'Simulation': { icon: <Gamepad2 className="h-8 w-8" />, color: "from-indigo-500/20 to-violet-500/20" },
-        };
-        
-        // Map genres to categories with icons or use default
-        const mappedCategories = uniqueGenres.map(genre => ({
-          name: genre,
-          icon: categoryIcons[genre]?.icon || <Gamepad2 className="h-8 w-8" />,
-          color: categoryIcons[genre]?.color || "from-gray-500/20 to-gray-400/20"
-        }));
-        
-        setCategories(mappedCategories);
-      } catch (error) {
-        console.error('Error fetching game categories:', error);
-        // Fallback to default categories if fetch fails
-        setCategories([
-          { name: "Action", icon: <Zap className="h-8 w-8" />, color: "from-red-500/20 to-orange-500/20" },
-          { name: "Adventure", icon: <Gamepad2 className="h-8 w-8" />, color: "from-blue-500/20 to-cyan-500/20" },
-          { name: "RPG", icon: <Trophy className="h-8 w-8" />, color: "from-purple-500/20 to-pink-500/20" },
-          { name: "Strategy", icon: <BarChart4 className="h-8 w-8" />, color: "from-green-500/20 to-emerald-500/20" },
-          { name: "Sports", icon: <TrendingUp className="h-8 w-8" />, color: "from-yellow-500/20 to-amber-500/20" },
-          { name: "Simulation", icon: <Gamepad2 className="h-8 w-8" />, color: "from-indigo-500/20 to-violet-500/20" },
-        ]);
-      }
-    };
-    
     fetchFeaturedNews();
-    fetchCategories();
   }, []);
 
   return (
