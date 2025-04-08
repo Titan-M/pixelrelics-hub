@@ -9,17 +9,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 
-// Category data with improved icons
-const categories = [
-  { name: "Action", icon: <Zap className="h-8 w-8" />, color: "from-red-500/20 to-orange-500/20" },
-  { name: "Adventure", icon: <Gamepad2 className="h-8 w-8" />, color: "from-blue-500/20 to-cyan-500/20" },
-  { name: "RPG", icon: <Trophy className="h-8 w-8" />, color: "from-purple-500/20 to-pink-500/20" },
-  { name: "Strategy", icon: <BarChart4 className="h-8 w-8" />, color: "from-green-500/20 to-emerald-500/20" },
-  { name: "Sports", icon: <TrendingUp className="h-8 w-8" />, color: "from-yellow-500/20 to-amber-500/20" },
-  { name: "Simulation", icon: <Gamepad2 className="h-8 w-8" />, color: "from-indigo-500/20 to-violet-500/20" },
-];
-
-// News type definition
+// Type definition for news
 type NewsItem = {
   id: string;
   title: string;
@@ -30,11 +20,63 @@ type NewsItem = {
   published_at: string;
 };
 
+// Type for categories with improved consistency
+type Category = {
+  name: string;
+  icon: JSX.Element;
+  color: string;
+};
+
 export default function Index() {
   const [featuredNews, setFeaturedNews] = useState<NewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
+    // Fetch categories based on available game genres
+    const fetchCategories = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('games')
+          .select('genre')
+          .not('genre', 'is', null);
+          
+        if (error) throw error;
+        
+        // Extract unique genres
+        const uniqueGenres = Array.from(new Set(data.map(item => item.genre)));
+        
+        // Map genres to categories with icons
+        const categoryIcons = [
+          { icon: <Zap className="h-8 w-8" />, color: "from-red-500/20 to-orange-500/20" },
+          { icon: <Gamepad2 className="h-8 w-8" />, color: "from-blue-500/20 to-cyan-500/20" },
+          { icon: <Trophy className="h-8 w-8" />, color: "from-purple-500/20 to-pink-500/20" },
+          { icon: <BarChart4 className="h-8 w-8" />, color: "from-green-500/20 to-emerald-500/20" },
+          { icon: <TrendingUp className="h-8 w-8" />, color: "from-yellow-500/20 to-amber-500/20" },
+          { icon: <Gamepad2 className="h-8 w-8" />, color: "from-indigo-500/20 to-violet-500/20" }
+        ];
+        
+        const mappedCategories = uniqueGenres.map((genre, index) => ({
+          name: genre as string,
+          icon: categoryIcons[index % categoryIcons.length].icon,
+          color: categoryIcons[index % categoryIcons.length].color
+        }));
+        
+        setCategories(mappedCategories);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        // Fallback to some default categories if there's an error
+        setCategories([
+          { name: "Action", icon: <Zap className="h-8 w-8" />, color: "from-red-500/20 to-orange-500/20" },
+          { name: "Adventure", icon: <Gamepad2 className="h-8 w-8" />, color: "from-blue-500/20 to-cyan-500/20" },
+          { name: "RPG", icon: <Trophy className="h-8 w-8" />, color: "from-purple-500/20 to-pink-500/20" },
+          { name: "Strategy", icon: <BarChart4 className="h-8 w-8" />, color: "from-green-500/20 to-emerald-500/20" },
+          { name: "Sports", icon: <TrendingUp className="h-8 w-8" />, color: "from-yellow-500/20 to-amber-500/20" },
+          { name: "Simulation", icon: <Gamepad2 className="h-8 w-8" />, color: "from-indigo-500/20 to-violet-500/20" }
+        ]);
+      }
+    };
+
     const fetchFeaturedNews = async () => {
       try {
         const { data, error } = await supabase
@@ -52,6 +94,7 @@ export default function Index() {
       }
     };
     
+    fetchCategories();
     fetchFeaturedNews();
   }, []);
 
@@ -152,34 +195,6 @@ export default function Index() {
         )}
         
         <GameGrid />
-        
-        {/* Download app section with enhanced design */}
-        <section className="py-16 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-y">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row items-center justify-between">
-              <div className="mb-8 md:mb-0 md:max-w-xl">
-                <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">Download Our App</h2>
-                <p className="text-muted-foreground mb-6">
-                  Get the best gaming experience with our desktop app. Browse and play your games faster, with automatic updates and offline gaming.
-                </p>
-                <Button className="group">
-                  Download Now
-                  <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </div>
-              
-              <div className="relative">
-                <div className="w-64 h-64 md:w-80 md:h-80 rounded-lg bg-gradient-to-r from-primary/20 to-primary/10 flex items-center justify-center animate-pulse">
-                  <div className="relative w-48 h-48 md:w-64 md:h-64 rounded-md bg-card shadow-xl transform rotate-3 transition-transform hover:rotate-0 duration-500">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Gamepad2 className="h-20 w-20 text-primary/70" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
       </main>
       
       <Footer />

@@ -247,7 +247,7 @@ export type Database = {
           {
             foreignKeyName: "free_games_game_id_fkey"
             columns: ["game_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "games"
             referencedColumns: ["id"]
           },
@@ -418,7 +418,7 @@ export type Database = {
           {
             foreignKeyName: "paid_games_game_id_fkey"
             columns: ["game_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "games"
             referencedColumns: ["id"]
           },

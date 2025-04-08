@@ -69,12 +69,17 @@ export function FeaturedGames() {
           .from('games')
           .select('*')
           .order('rating', { ascending: false })
-          .limit(3);
+          .limit(5); // Increased from 3 to 5 to ensure we have enough slides
           
         if (fetchError) throw fetchError;
         
         if (data && data.length > 0) {
-          setGames(data);
+          // Make sure all games have valid image_url
+          const gamesWithImages = data.map(game => ({
+            ...game,
+            image_url: game.image_url || 'https://images.unsplash.com/photo-1511512578047-dfb367046420?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'
+          }));
+          setGames(gamesWithImages);
         } else {
           setError("No featured games found");
         }
@@ -149,7 +154,7 @@ export function FeaturedGames() {
             >
               <div 
                 className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: `url(${game.image_url || '/placeholder.svg'})` }}
+                style={{ backgroundImage: `url(${game.image_url})` }}
               />
               <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
               

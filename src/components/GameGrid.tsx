@@ -1,12 +1,14 @@
+
 import { useState, useEffect } from "react";
 import { GameCard } from "./GameCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, SlidersHorizontal } from "lucide-react";
+import { Search, Filter, SlidersHorizontal, ChevronDown } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from "lucide-react";
 import { useAuth } from '@/context/AuthContext';
+import { Button } from "@/components/ui/button";
 
 type Game = {
   id: string;
@@ -27,6 +29,7 @@ export function GameGrid() {
   const [priceRange, setPriceRange] = useState([0, 100]);
   const [maxPrice, setMaxPrice] = useState(100);
   const [userLibrary, setUserLibrary] = useState<string[]>([]);
+  const [visibleGamesCount, setVisibleGamesCount] = useState(6);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -106,6 +109,13 @@ export function GameGrid() {
     return matchesSearch && matchesTab && matchesPriceRange;
   });
 
+  const visibleGames = filteredGames.slice(0, visibleGamesCount);
+  const hasMoreGames = filteredGames.length > visibleGamesCount;
+
+  const handleShowMore = () => {
+    setVisibleGamesCount(prev => prev + 6);
+  };
+
   return (
     <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <div className="mb-12">
@@ -161,27 +171,42 @@ export function GameGrid() {
           <span className="ml-2">Loading games...</span>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredGames.length > 0 ? (
-            filteredGames.map((game) => (
-              <GameCard
-                key={game.id}
-                id={game.id}
-                title={game.title}
-                image={game.image_url}
-                price={game.is_free ? 'Free' : game.price}
-                genre={game.genre}
-                rating={game.rating}
-                description={game.description}
-              />
-            ))
-          ) : (
-            <div className="col-span-full text-center py-12">
-              <h3 className="text-xl font-medium mb-2">No games found</h3>
-              <p className="text-muted-foreground">Try adjusting your search or filter criteria</p>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {visibleGames.length > 0 ? (
+              visibleGames.map((game) => (
+                <GameCard
+                  key={game.id}
+                  id={game.id}
+                  title={game.title}
+                  image={game.image_url}
+                  price={game.is_free ? 'Free' : game.price}
+                  genre={game.genre}
+                  rating={game.rating}
+                  description={game.description}
+                />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <h3 className="text-xl font-medium mb-2">No games found</h3>
+                <p className="text-muted-foreground">Try adjusting your search or filter criteria</p>
+              </div>
+            )}
+          </div>
+          
+          {hasMoreGames && (
+            <div className="flex justify-center mt-12">
+              <Button 
+                onClick={handleShowMore} 
+                variant="outline" 
+                className="px-6 py-2 group"
+              >
+                Show More
+                <ChevronDown className="ml-2 h-4 w-4 group-hover:translate-y-0.5 transition-transform" />
+              </Button>
             </div>
           )}
-        </div>
+        </>
       )}
     </section>
   );

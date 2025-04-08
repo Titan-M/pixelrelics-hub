@@ -6,7 +6,7 @@ export function Footer() {
   return (
     <footer className="border-t">
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="space-y-4">
             <Link to="/" className="font-bold text-xl">
               Epic<span className="text-primary">Hub</span>
@@ -40,13 +40,7 @@ export function Footer() {
                 <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">About Us</Link>
               </li>
               <li>
-                <Link to="/careers" className="text-muted-foreground hover:text-primary transition-colors">Careers</Link>
-              </li>
-              <li>
                 <Link to="/news" className="text-muted-foreground hover:text-primary transition-colors">News</Link>
-              </li>
-              <li>
-                <Link to="/partners" className="text-muted-foreground hover:text-primary transition-colors">Partners</Link>
               </li>
             </ul>
           </div>
@@ -68,24 +62,6 @@ export function Footer() {
               </li>
             </ul>
           </div>
-          
-          <div>
-            <h3 className="font-medium mb-4">Download</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link to="/download/windows" className="text-muted-foreground hover:text-primary transition-colors">Windows</Link>
-              </li>
-              <li>
-                <Link to="/download/mac" className="text-muted-foreground hover:text-primary transition-colors">macOS</Link>
-              </li>
-              <li>
-                <Link to="/download/linux" className="text-muted-foreground hover:text-primary transition-colors">Linux</Link>
-              </li>
-              <li>
-                <Link to="/download/mobile" className="text-muted-foreground hover:text-primary transition-colors">Mobile</Link>
-              </li>
-            </ul>
-          </div>
         </div>
         
         <div className="border-t pt-8 mt-12">
@@ -102,9 +78,6 @@ export function Footer() {
               </Link>
               <Link to="/legal/cookies" className="text-muted-foreground hover:text-primary transition-colors">
                 Cookies
-              </Link>
-              <Link to="/legal/licenses" className="text-muted-foreground hover:text-primary transition-colors">
-                Licenses
               </Link>
             </div>
           </div>
