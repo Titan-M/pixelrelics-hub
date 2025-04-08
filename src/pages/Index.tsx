@@ -8,9 +8,18 @@ import { ArrowRight, TrendingUp, Trophy, Zap, Gamepad2, BarChart4 } from "lucide
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { Skeleton } from "@/components/ui/skeleton";
 
-// Type definitions
+// Category data with improved icons
+const categories = [
+  { name: "Action", icon: <Zap className="h-8 w-8" />, color: "from-red-500/20 to-orange-500/20" },
+  { name: "Adventure", icon: <Gamepad2 className="h-8 w-8" />, color: "from-blue-500/20 to-cyan-500/20" },
+  { name: "RPG", icon: <Trophy className="h-8 w-8" />, color: "from-purple-500/20 to-pink-500/20" },
+  { name: "Strategy", icon: <BarChart4 className="h-8 w-8" />, color: "from-green-500/20 to-emerald-500/20" },
+  { name: "Sports", icon: <TrendingUp className="h-8 w-8" />, color: "from-yellow-500/20 to-amber-500/20" },
+  { name: "Simulation", icon: <Gamepad2 className="h-8 w-8" />, color: "from-indigo-500/20 to-violet-500/20" },
+];
+
+// News type definition
 type NewsItem = {
   id: string;
   title: string;
@@ -21,42 +30,13 @@ type NewsItem = {
   published_at: string;
 };
 
-type Category = {
-  name: string;
-  icon: JSX.Element;
-  color: string;
-};
-
-// Category icons mapping
-const categoryIcons = {
-  "Action": <Zap className="h-8 w-8" />,
-  "Adventure": <Gamepad2 className="h-8 w-8" />,
-  "RPG": <Trophy className="h-8 w-8" />,
-  "Strategy": <BarChart4 className="h-8 w-8" />,
-  "Sports": <TrendingUp className="h-8 w-8" />,
-  "Simulation": <Gamepad2 className="h-8 w-8" />,
-};
-
-// Category colors mapping
-const categoryColors = {
-  "Action": "from-red-500/20 to-orange-500/20",
-  "Adventure": "from-blue-500/20 to-cyan-500/20",
-  "RPG": "from-purple-500/20 to-pink-500/20",
-  "Strategy": "from-green-500/20 to-emerald-500/20",
-  "Sports": "from-yellow-500/20 to-amber-500/20",
-  "Simulation": "from-indigo-500/20 to-violet-500/20",
-};
-
 export default function Index() {
   const [featuredNews, setFeaturedNews] = useState<NewsItem[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isNewsLoading, setIsNewsLoading] = useState(true);
-  const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchFeaturedNews = async () => {
       try {
-        setIsNewsLoading(true);
         const { data, error } = await supabase
           .from('news')
           .select('*')
@@ -68,51 +48,11 @@ export default function Index() {
       } catch (error) {
         console.error('Error fetching featured news:', error);
       } finally {
-        setIsNewsLoading(false);
-      }
-    };
-    
-    const fetchGameCategories = async () => {
-      try {
-        setIsCategoriesLoading(true);
-        // Get all unique genres from games table
-        const { data, error } = await supabase
-          .from('games')
-          .select('genre')
-          .not('genre', 'is', null)
-          .order('genre');
-          
-        if (error) throw error;
-        
-        // Extract unique genres
-        const uniqueGenres = [...new Set(data.map(game => game.genre))];
-        
-        // Map genres to categories with icons and colors
-        const mappedCategories = uniqueGenres.map(genre => ({
-          name: genre,
-          icon: categoryIcons[genre as keyof typeof categoryIcons] || <Gamepad2 className="h-8 w-8" />,
-          color: categoryColors[genre as keyof typeof categoryColors] || "from-gray-500/20 to-gray-500/20"
-        }));
-        
-        setCategories(mappedCategories);
-      } catch (error) {
-        console.error('Error fetching game categories:', error);
-        // Fallback to some default categories if we can't fetch from the database
-        setCategories([
-          { name: "Action", icon: <Zap className="h-8 w-8" />, color: "from-red-500/20 to-orange-500/20" },
-          { name: "Adventure", icon: <Gamepad2 className="h-8 w-8" />, color: "from-blue-500/20 to-cyan-500/20" },
-          { name: "RPG", icon: <Trophy className="h-8 w-8" />, color: "from-purple-500/20 to-pink-500/20" },
-          { name: "Strategy", icon: <BarChart4 className="h-8 w-8" />, color: "from-green-500/20 to-emerald-500/20" },
-          { name: "Sports", icon: <TrendingUp className="h-8 w-8" />, color: "from-yellow-500/20 to-amber-500/20" },
-          { name: "Simulation", icon: <Gamepad2 className="h-8 w-8" />, color: "from-indigo-500/20 to-violet-500/20" },
-        ]);
-      } finally {
-        setIsCategoriesLoading(false);
+        setIsLoading(false);
       }
     };
     
     fetchFeaturedNews();
-    fetchGameCategories();
   }, []);
 
   return (
@@ -124,39 +64,30 @@ export default function Index() {
           <FeaturedGames />
         </div>
         
-        {/* Categories section with dynamic data */}
+        {/* Categories section with enhanced design */}
         <section className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
           <div className="mb-10">
             <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">Browse Categories</h2>
             <p className="text-muted-foreground">Discover games by genre</p>
           </div>
           
-          {isCategoriesLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
-              {[...Array(6)].map((_, index) => (
-                <Skeleton key={index} className="h-32 rounded-lg" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
-              {categories.map((category) => (
-                <Link 
-                  key={category.name}
-                  to={`/store?genre=${category.name}`}
-                  className={`flex flex-col items-center justify-center p-6 rounded-lg border bg-gradient-to-br ${category.color} hover:shadow-lg hover:border-primary/20 transition-all duration-300 cursor-pointer group`}
-                >
-                  <div className="text-primary mb-3 transform group-hover:scale-110 transition-transform duration-300">
-                    {category.icon}
-                  </div>
-                  <span className="font-medium group-hover:text-primary transition-colors">{category.name}</span>
-                </Link>
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+            {categories.map((category) => (
+              <div 
+                key={category.name}
+                className={`flex flex-col items-center justify-center p-6 rounded-lg border bg-gradient-to-br ${category.color} hover:shadow-lg hover:border-primary/20 transition-all duration-300 cursor-pointer group`}
+              >
+                <div className="text-primary mb-3 transform group-hover:scale-110 transition-transform duration-300">
+                  {category.icon}
+                </div>
+                <span className="font-medium group-hover:text-primary transition-colors">{category.name}</span>
+              </div>
+            ))}
+          </div>
         </section>
         
         {/* Featured News Section */}
-        {(featuredNews.length > 0 || isNewsLoading) && (
+        {featuredNews.length > 0 && (
           <section className="py-12 bg-black/5 border-y">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex flex-col md:flex-row justify-between items-center mb-10">
@@ -173,15 +104,15 @@ export default function Index() {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {isNewsLoading ? (
+                {isLoading ? (
                   Array(3).fill(0).map((_, i) => (
                     <div key={i} className="bg-card border rounded-lg overflow-hidden animate-pulse">
-                      <Skeleton className="h-48" />
+                      <div className="h-48 bg-muted"></div>
                       <div className="p-5">
-                        <Skeleton className="h-4 w-2/3 mb-2" />
-                        <Skeleton className="h-3 w-1/2 mb-4" />
-                        <Skeleton className="h-3 w-full mb-2" />
-                        <Skeleton className="h-3 w-5/6" />
+                        <div className="h-4 bg-muted rounded w-2/3 mb-2"></div>
+                        <div className="h-3 bg-muted rounded w-1/2 mb-4"></div>
+                        <div className="h-3 bg-muted rounded w-full mb-2"></div>
+                        <div className="h-3 bg-muted rounded w-5/6"></div>
                       </div>
                     </div>
                   ))
