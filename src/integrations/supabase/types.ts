@@ -230,17 +230,28 @@ export type Database = {
       free_games: {
         Row: {
           created_at: string
+          game_id: string
           id: number
         }
         Insert: {
           created_at?: string
+          game_id: string
           id?: number
         }
         Update: {
           created_at?: string
+          game_id?: string
           id?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "free_games_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       game_details: {
         Row: {
@@ -388,19 +399,30 @@ export type Database = {
         Row: {
           created_at: string
           discount_percentage: number | null
+          game_id: string
           id: number
         }
         Insert: {
           created_at?: string
           discount_percentage?: number | null
+          game_id: string
           id?: number
         }
         Update: {
           created_at?: string
           discount_percentage?: number | null
+          game_id?: string
           id?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "paid_games_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payments: {
         Row: {

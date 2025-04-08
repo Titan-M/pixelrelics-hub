@@ -4,6 +4,7 @@ import { GameCard } from "./GameCard";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 type Game = {
   id: string;
@@ -23,6 +24,7 @@ export function FeaturedGames() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const timerRef = useRef<number | null>(null);
+  const { toast } = useToast();
 
   const nextSlide = () => {
     if (isTransitioning || games.length === 0) return;
@@ -63,29 +65,34 @@ export function FeaturedGames() {
         setLoading(true);
         
         // Fetch games with high ratings (featured games)
-        const { data, error } = await supabase
+        const { data, error: fetchError } = await supabase
           .from('games')
           .select('*')
           .order('rating', { ascending: false })
           .limit(3);
           
-        if (error) throw error;
+        if (fetchError) throw fetchError;
         
         if (data && data.length > 0) {
           setGames(data);
         } else {
           setError("No featured games found");
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Error fetching featured games:', err);
-        setError("Failed to load featured games");
+        setError(`Failed to load featured games: ${err.message}`);
+        toast({
+          title: "Error",
+          description: "Failed to load featured games. Please try again later.",
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
     };
     
     fetchFeaturedGames();
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     // Only set up timer if we have games
