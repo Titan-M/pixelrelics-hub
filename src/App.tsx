@@ -11,7 +11,7 @@ import Library from '@/pages/Library';
 import News from '@/pages/News';
 import Support from '@/pages/Support';
 import Cart from '@/pages/Cart';
-import Checkout from '@/pages/Checkout';
+import Checkout from '@/pages/Checkout'; 
 import Profile from '@/pages/Profile';
 import GameDetails from '@/pages/GameDetails';
 import NotFound from '@/pages/NotFound';
